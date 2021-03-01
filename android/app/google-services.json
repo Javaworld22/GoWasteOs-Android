@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "680624373132",
+    "project_id": "gowasteos",
+    "storage_bucket": "gowasteos.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:680624373132:android:05921f47ef3216aeb2aaa9",
+        "android_client_info": {
+          "package_name": "com.gowasteos"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "680624373132-f0utcqgro35731jk1iv5jhe4a7lb7dpb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gowasteos",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "680624373132-k3ofeg0q9de8pgiqll26i953t3okrhld.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhsg-BMTARV8tWV-XOyoBNmT2rY4P_BJU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "680624373132-k3ofeg0q9de8pgiqll26i953t3okrhld.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
