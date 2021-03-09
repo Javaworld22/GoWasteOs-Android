@@ -108,6 +108,7 @@ export default class BidHistory extends Component {
       
     render() {
         const bidList = this.state.bidList;
+        console.log(bidList);
 
         return (
             <SafeAreaView style={style.wrapper}>
@@ -123,7 +124,11 @@ export default class BidHistory extends Component {
                 />
                 <NavigationEvents
                     onDidFocus={() => 
-                        this.setState({pageno:1, isScroll:false},
+                        this.setState({
+                            pageno:1, 
+                            isScroll:false,
+                            bidList: [],
+                        },
                             ()=>{
                                 this._getBidList()
                             })
@@ -139,7 +144,7 @@ export default class BidHistory extends Component {
                         onEndReached={this.fetchList}
                         onEndReachedThreshold={0.5}
                         ListEmptyComponent={ () => {return (
-                            <Text>No job available</Text>
+                            <Text>No bid history available</Text>
                         )}}
                         renderItem={({item}) => (
 
@@ -199,7 +204,7 @@ export default class BidHistory extends Component {
                                         </TouchableOpacity>
                                         :
                                         <View style={style.inactivebtn}>
-                                            <Text style={style.smbtntext}>Send</Text>
+                                            <Text style={style.smbtntext}>Sent</Text>
                                         </View>
                                         }
                                     </View>

@@ -129,7 +129,23 @@ export default class ChatList extends Component {
                                         />
                                     </View>
                                 </View>
-                                <View style={styles.centercontent}>
+                                <View style={{flexDirection:'row',justifyContent:'space-between',width:'85%'}}>
+                                    <View style={styles.centercontent}>
+                                        <Text style={style.headingmain} numberOfLines={1} >{item.other_user_name}</Text>                               
+                                        <Text style={style.msgtext} numberOfLines={1}>{item.message}</Text>
+                                    </View>
+                                    <View>
+                                        <Text style={styles.datetext}> {dateTime}</Text>
+                                        {item.unread_msg_count>0 && 
+                                        <View style={{padding:5}}>
+                                            <Text style={styles.unreadmsgcount}> 
+                                                {item.unread_msg_count}
+                                            </Text>
+                                        </View>
+                                        }
+                                    </View>
+                                </View>
+                                {/* <View style={styles.centercontent}>
                                     <Text style={style.headingmain} numberOfLines={1} >{item.other_user_name}</Text>                               
                                     <Text style={style.msgtext} numberOfLines={1}>{item.message}</Text>
                                 </View>
@@ -142,7 +158,7 @@ export default class ChatList extends Component {
                                         </Text>
                                     </View>
                                     }
-                                </View>
+                                </View> */}
                             </TouchableOpacity>
                         )}
                     }
