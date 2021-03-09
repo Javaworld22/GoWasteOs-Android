@@ -98,6 +98,7 @@ export default class Notification extends Component {
                         this.setState({
                             pageno:1,
                             isScroll:false,
+                            notificationList: {},
                         },
                             ()=>{
                                 this.getNotification()
@@ -117,22 +118,25 @@ export default class Notification extends Component {
                         renderItem={({item}) => (
                             <TouchableOpacity style={styles.notificationbox} onPress={() => this.go(item.type, item.details_id)} >
                                     
-                                <View style={style.avtbox}>
+                                <View style={[style.avtbox],{paddingRight:6}}>
                                     <View style={style.avatar}>
                                         <Image source={{ uri: item.from_user.profilePicture }} style={{ width: 65, height: 65 }} />
                                     </View>
                                 </View>
-                                <View style={style.centercontent}>
-                                    <Text style={style.headingmain} numberOfLines={1} >{item.message}</Text>
-                                    <View style={[style.rowSec, style.alignCenter]}>
-                                        <Icon name="ios-time-outline" color="#777" size={14} />
-                                        {/* <Text style={style.msgtext}>{moment(item.created_date).format('MMMM Do YYYY')}, {moment.utc(item.created_date.split(' ')[1], 'HH:mm:ss').format('hh:mm A')}</Text> */}
-                                        <Text style={style.msgtext}>{moment(item.created_date).format('MMMM Do YYYY')}, {moment.utc(item.created_date).format('hh:mm A')}</Text>
-                                    </View>                                
+                                <View style={{flexDirection:'row'}}>
+                                    <View style={style.centercontent}>
+                                        <Text style={style.headingmain} numberOfLines={1} >{item.message}</Text>
+                                        <View style={[style.rowSec, style.alignCenter]}>
+                                            <Icon name="ios-time-outline" color="#777" size={14} />
+                                            {/* <Text style={style.msgtext}>{moment(item.created_date).format('MMMM Do YYYY')}, {moment.utc(item.created_date.split(' ')[1], 'HH:mm:ss').format('hh:mm A')}</Text> */}
+                                            <Text style={style.msgtext}>{moment(item.created_date).format('MMMM Do YYYY')}, {moment.utc(item.created_date).format('hh:mm A')}</Text>
+                                        </View>                                
+                                    </View>
+                                    <View style={{paddingLeft:10}}>
+                                        <Icon name="chevron-forward" color="#1cae81" size={24} />
+                                    </View>
                                 </View>
-                                <View style={style.colicon}>
-                                    <Icon name="chevron-forward" color="#1cae81" size={24} />
-                                </View>
+                                
                             </TouchableOpacity>
                         )}
                     />
