@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, SafeAreaView, TouchableOpacity, StatusBar, Image, ScrollView, TextInput, Dimensions,StyleSheet,Alert } from 'react-native'
+import { Text, View, SafeAreaView, TouchableOpacity, StatusBar, Image, ScrollView, TextInput, Dimensions,StyleSheet,Alert,Platform } from 'react-native'
 import Icon from 'react-native-vector-icons/Ionicons';
 import style from '../../components/mainstyle';
 import styles from './style';
@@ -16,8 +16,13 @@ import MapViewDirections from 'react-native-maps-directions';
 import moment from "moment";
 import io from 'socket.io-client';
 
-const LATITUDE_DELTA = 0.003;
-const LONGITUDE_DELTA = 0.003;
+const screen = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+const ASPECT_RATIO = screen.width / screen.height;
+const LATITUDE_DELTA = 0.011;
+const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+// const LATITUDE_DELTA = 0.003;
+// const LONGITUDE_DELTA = 0.003;
 const LATITUDE = Number(store.getState().userDetails.lattitude);
 const LONGITUDE = Number(store.getState().userDetails.longitude);
 
@@ -25,7 +30,8 @@ export default class Tracking extends Component {
   
     constructor(props) {
       super(props);
-      
+      this.carMarkerRef = React.createRef();
+      this.mapRef = React.createRef();
       this.state = {
         showLoader: false,
         showMap: false,
@@ -42,23 +48,18 @@ export default class Tracking extends Component {
           latitude: this.props.navigation.state.params.lat, 
           longitude: this.props.navigation.state.params.long
         },
+        carLocation: {
+          latitude: 37.3318456, 
+          longitude: -122.0296002
+        },
         currentLocation: new AnimatedRegion({
           latitude: LATITUDE, 
           longitude: LONGITUDE,
-          latitudeDelta: 0,
-          longitudeDelta: 0
+          latitudeDelta: LATITUDE_DELTA,
+          longitudeDelta: LONGITUDE_DELTA
         }),
 
-        latitude: LATITUDE,
-        longitude: LONGITUDE,
-        routeCoordinates: [],
-        prevLatLng: {},
-        coordinate: new AnimatedRegion({
-          latitude: LATITUDE,
-          longitude: LONGITUDE,
-          latitudeDelta: 0,
-          longitudeDelta: 0
-        })
+        
       };
     }
   
@@ -116,12 +117,17 @@ export default class Tracking extends Component {
           if(this.state.usertype === 'C'){
 
             this.setState({
-              currentLocation: {
+              carLocation: {
                 latitude: data.latitude,
                 longitude: data.longitude
               },
-              routeCoordinates: routeCoordinates.concat([newCoordinate]),
-              prevLatLng: newCoordinate
+              currentLocation: new AnimatedRegion({
+                latitude: data.latitude,
+                longitude: data.longitude,
+                latitudeDelta: LATITUDE_DELTA,
+                longitudeDelta: LONGITUDE_DELTA
+              })
+              
             },
               () => {
                 //Animate map
@@ -188,16 +194,23 @@ export default class Tracking extends Component {
             latitude: Number(response.details.trip.source_lat),
             longitude: Number(response.details.trip.source_long)
           },
-          currentLocation: {
+          carLocation: {
             latitude: Number(response.details.trip.last_lat),
             longitude: Number(response.details.trip.last_long)
           },
+          currentLocation: new AnimatedRegion({
+            latitude: Number(response.details.trip.last_lat),
+            longitude: Number(response.details.trip.last_long),
+            latitudeDelta: LATITUDE_DELTA,
+            longitudeDelta: LONGITUDE_DELTA
+          }),
         },
           () => {
             this.setState({showMap:true});
             //Configure socket
             this.configureSocket();
             if(this.state.usertype === 'SP'){
+              // this.findCoordinatesNew();
               this.interval = setInterval(
                 () => {
                   this.findCoordinates();
@@ -224,23 +237,24 @@ export default class Tracking extends Component {
           Geolocation.getCurrentPosition(
             (position) => {
               // console.log("current position",position.coords);
-              
-              const { routeCoordinates } = this.state;
+             
               const { latitude, longitude } = position.coords;
               const newCoordinate = {latitude,longitude};
               
               if(this.state.currentLocation.latitude != position.coords.latitude  && this.state.currentLocation.longitude != position.coords.longitude){
-                
-                // console.log('lat diff: prev-',this.state.currentLocation.latitude,"-next-",position.coords.latitude);
-                // console.log('long diff: prev-',this.state.currentLocation.longitude,"-next-",position.coords.longitude);
 
                 this.setState({
-                  currentLocation: {
+                  carLocation: {
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude
                   },
-                  routeCoordinates: routeCoordinates.concat([newCoordinate]),
-                  prevLatLng: newCoordinate
+                  currentLocation: new AnimatedRegion({
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    latitudeDelta: LATITUDE_DELTA,
+                    longitudeDelta: LONGITUDE_DELTA
+                  }),
+                  
                 },
                   () => {
                     //Animate map
@@ -287,29 +301,116 @@ export default class Tracking extends Component {
         }
     };
 
+    findCoordinatesNew = async() => {
+      const { currentLocation } = this.state;
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        {
+          'title': 'Location Permission',
+          'message': 'GoWasteOs needs access to your location '
+        })
+
+      if (granted) {
+
+        this.watchID = Geolocation.watchPosition(
+          (position) => {
+            console.log('position',position);
+
+            const { routeCoordinates } = this.state;
+            const { latitude, longitude } = position.coords;
+            const newCoordinate = {latitude,longitude};
+              
+            if(this.state.currentLocation.latitude != position.coords.latitude  && this.state.currentLocation.longitude != position.coords.longitude){
+
+              this.setState({
+                currentLocation: {
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude
+                },
+                // routeCoordinates: routeCoordinates.concat([newCoordinate]),
+                prevLatLng: newCoordinate
+              },
+                () => {
+                  //Animate map
+                  this._animateToMapRegion(position.coords.latitude, position.coords.longitude);
+
+                  //Send coordinate to socket
+                  var resuserArr = Array();
+                  if(this.state.locationUserList.length>0){
+                    resuserArr = this.state.locationUserList.filter(item => item.bookingId == this.state.bookingId);
+                  }
+                  if(resuserArr.length>0){
+                    var locationInfo = {
+                      id: resuserArr[0].id,
+                      bookingId: this.state.bookingId, 
+                      latitude: position.coords.latitude, 
+                      longitude: position.coords.longitude, 
+                    }
+                  } else {
+                    var locationInfo = {
+                      id: '',
+                      bookingId: this.state.bookingId, 
+                      latitude: position.coords.latitude, 
+                      longitude: position.coords.longitude, 
+                    }
+                  }
+                  
+                  this.socket.emit('sendCurrentLocation', locationInfo);
+                  
+                  //Update coordinate
+                  this.updateTracking(position.coords.latitude, position.coords.longitude);
+                }
+              );
+            }
+
+          },
+          error => console.log(error),
+          {
+            enableHighAccuracy: true,
+            timeout: 20000,
+            maximumAge: 1000,
+            distanceFilter: 1
+          }
+        );              
+      }
+    };
+
     componentWillUnmount() {
-      // Geolocation.clearWatch(this.watchID);
       if(this.state.usertype === 'SP'){
         clearInterval(this.interval);
+        // Geolocation.clearWatch(this.watchID);
       }
     }
     
-    getMapRegion = () => ({
-      latitude: this.state.currentLocation.latitude,
-      longitude: this.state.currentLocation.longitude,
-      latitudeDelta: LATITUDE_DELTA,
-      longitudeDelta: LONGITUDE_DELTA
-    });
+    // getMapRegion = () => ({
+    //   latitude: this.state.currentLocation.latitude,
+    //   longitude: this.state.currentLocation.longitude,
+    //   latitudeDelta: LATITUDE_DELTA,
+    //   longitudeDelta: LONGITUDE_DELTA
+    // });
 
     _animateToMapRegion = (lat,lng) => {
-      let tempCoords = {
+      const newAnimatedCoords = new AnimatedRegion({
         latitude: lat,
         longitude: lng,
         latitudeDelta: LATITUDE_DELTA,
         longitudeDelta: LONGITUDE_DELTA
+      });
+
+      this.mapRef.current.animateToRegion({
+        latitude: this.state.carLocation.latitude,
+        longitude: this.state.carLocation.longitude,
+        latitudeDelta: LATITUDE_DELTA,
+        longitudeDelta: LONGITUDE_DELTA
+      })
+
+      if (Platform.OS === "android") {
+        this.carMarkerRef.current.animateMarkerToCoordinate(newAnimatedCoords,5000);
+      } else {
+        this.state.currentLocation.timing(newAnimatedCoords).start();
       }
-      this._carMarker.animateMarkerToCoordinate(tempCoords,500);
-      // this._map.animateCamera({center: tempCoords,pitch: 2, heading: 20,altitude: 200, zoom: 40},10);
+
+      // this._map.animateCamera({center: newCoords,pitch: 2, heading: 20,altitude: 200, zoom: 40},10);
     }
 
     updateTracking = async(latitude,longitude) => {
@@ -334,8 +435,8 @@ export default class Tracking extends Component {
           onPress: async () => {
             let formData = new FormData();
             formData.append('booking_id', this.state.bookingId);
-            formData.append('last_lat', this.state.currentLocation.latitude);
-            formData.append('last_long', this.state.currentLocation.longitude);
+            formData.append('last_lat', this.state.carLocation.latitude);
+            formData.append('last_long', this.state.carLocation.longitude);
             formData.append('is_ongoing', 2);
             formData.append('endTime', moment(new Date()).format('YYYY-MM-DD HH:mm:ss'));
             
@@ -386,37 +487,36 @@ export default class Tracking extends Component {
                     <MapView
                         style={{flex:1}}
                         provider={PROVIDER_GOOGLE}
-                        showUserLocation ={true}
-                        followUserLocation = {true}
-                        loadingEnabled = {true}
-                        // mapType="satellite"
-                        region={this.getMapRegion()}
-                        ref={node => {this._map = node}}
+                        initialRegion={{
+                          ...this.state.carLocation,
+                          latitudeDelta: LATITUDE_DELTA,
+                          longitudeDelta: LONGITUDE_DELTA,
+                        }}
+                        ref={this.mapRef}
                     >
-                      
-                      {/* <Marker.Animated 
-                        pinColor = "blue"
+                        
+                      {/* <Marker
                         coordinate={this.state.providerLocation} 
                       /> */}
-                        
-                      <Marker.Animated
+                      <Marker
                         coordinate={this.state.jobLocation} 
                       />
                       <Marker.Animated 
-                        ref={node => {this._carMarker = node}}
+                        ref={this.carMarkerRef}
                         coordinate={this.state.currentLocation} 
                       >
-                        <Image source={require('../../assets/images/map-car.png')} style={{height: 35, width:40 }} />
+                        <Image source={require('../../assets/images/map-car.png')} style={{height: 22, width:25 }} />
                       </Marker.Animated>
                       
 
                       <MapViewDirections
-                        origin={this.state.currentLocation}
+                        origin={this.state.carLocation}
                         destination={this.state.jobLocation}
                         apikey={googleApiKey}
-                        strokeWidth={10}
+                        strokeWidth={5}
                         strokeColor="#1273de"
                         resetOnChange ={false}
+                        
                   
                       />
                       
