@@ -217,6 +217,8 @@ export default class Home extends Component {
                         this.setState({
                             pageno:1,
                             isScroll:false,
+                            jobList:{},
+                            serviceProviderList:{}
                         },
                             ()=>{
                                 this.myFunction()
