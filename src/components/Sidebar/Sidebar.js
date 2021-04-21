@@ -90,6 +90,7 @@ export default class Sidebar extends Component {
             //this.forceUpdate();
            this.setState({ userDetails: response.details });
         } else {
+            this._logOut();
             // console.log("Error in 'profileDetails' api");
         }
     };

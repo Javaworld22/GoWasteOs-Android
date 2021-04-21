@@ -113,10 +113,15 @@ export default class Home extends Component {
             } 
             //For scroll
             if (response.details.providers && this.state.isScroll==true && response.details.ack == '1') {
-                
-                this.setState({
-                    serviceProviderList: this.state.serviceProviderList.concat(response.details.providers),
-                });
+                const object1 = this.state.serviceProviderList;             
+                const object2 = response.details.providers;             
+                const object3 = [...object1, ...object2];
+                const object4 = [...new Map(object3.map(o => [o.id, o])).values()];         
+                this.setState({serviceProviderList: object4});
+
+                // this.setState({
+                //     serviceProviderList: this.state.serviceProviderList.concat(response.details.providers),
+                // });
                 this.setState({isScroll: false});
                 this.setState({pageno: this.state.pageno+1});
             }
@@ -165,9 +170,15 @@ export default class Home extends Component {
             } 
             //For scroll
             if (response.details.jobs && this.state.isScroll==true && response.details.ack == '1') {
-                this.setState({
-                    jobList: this.state.jobList.concat(response.details.jobs),
-                });
+                const object1 = this.state.jobList;             
+                const object2 = response.details.jobs;             
+                const object3 = [...object1, ...object2];
+                const object4 = [...new Map(object3.map(o => [o.id, o])).values()];           
+                this.setState({jobList: object4});
+
+                // this.setState({
+                //     jobList: this.state.jobList.concat(response.details.jobs),
+                // });
                 
                 this.setState({isScroll: false});
                 this.setState({pageno: this.state.pageno+1});
