@@ -51,6 +51,7 @@ export const endPoints = {
 
   deleteJob: 'jobs/jobDelete.json',
   notificationList: 'jobs/notificationList.json',
+  updateNotiReadStatus: 'reviews/updateNotiReadStatus.json',
 
   forgotPassword: 'users/forgotpassword.json',
   resetPassword: 'users/setpassword.json', 

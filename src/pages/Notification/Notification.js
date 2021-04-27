@@ -21,7 +21,7 @@ export default class Notification extends Component {
           };   
     }
     componentDidMount = async () => {
-        this.getNotification(); 
+        this.getNotification();
     };
 
     go=(type, id)=>{
@@ -40,7 +40,7 @@ export default class Notification extends Component {
     }
 
     getNotification=async()=>{
-       
+        this.changeNotiReadStatus();
         let formData = new FormData();
         formData.append('user_id', await Retrieve("userId"));
         if(this.state.isScroll==true){
@@ -75,6 +75,16 @@ export default class Notification extends Component {
         }
     }
 
+    changeNotiReadStatus= async() => {
+        let formData = new FormData();
+        formData.append('to_id', await Retrieve("userId"));
+        // console.log(formData);
+        let response = await POST(endPoints.updateNotiReadStatus, formData, {
+            Authorization: await Retrieve("userToken")
+        });
+        // console.log(response);
+    }
+
     fetchList=()=>{
         this.setState({
             isScroll: true,
@@ -101,7 +111,7 @@ export default class Notification extends Component {
                             notificationList: {},
                         },
                             ()=>{
-                                this.getNotification()
+                                this.getNotification();
                             })
                     }
                 />

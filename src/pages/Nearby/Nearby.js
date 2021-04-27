@@ -31,9 +31,13 @@ export default class Nearby extends Component {
     }
 
     componentDidMount = async () => { 
+        this.combineFunction();
+    };
+
+    combineFunction = async () =>{
         this.getMapUsers();
         this.findCoordinates();
-    };
+    }
 
     getMapUsers = async() => {
         let formDatas = new FormData();
@@ -158,7 +162,7 @@ export default class Nearby extends Component {
                 />
 
                 <NavigationEvents
-                    onDidFocus={() =>this.findCoordinates()}
+                    onDidFocus={() =>this.combineFunction()}
                 />
 
                 <View style={style.container}>

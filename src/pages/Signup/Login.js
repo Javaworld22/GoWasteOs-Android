@@ -133,7 +133,7 @@ export default class Login extends Component {
                 let response = await POST(endPoints.socialLogin, formData);
                 
                 if(response.ack == "2"){
-                    console.log("2")
+                    // console.log("2")
                     this.setState({isApiError: true, apiMessage: "Please wait..."});
                     this.setState({modalVisible: true});
                     this.setState({userInfo: userInfo});
@@ -148,21 +148,14 @@ export default class Login extends Component {
                     this.setState({isApiError: false, apiMessage: ""});
                 }
                 else if (response.ack == '1') {
-                    console.log("3")
-                    await Store('userToken', response.details.token);
-                    await Store('userId', response.details.id);
-                    await Store('userType', response.details.type);
-                    await Store('loginStatus', 'true');
-                    this.props.navigation.navigate('Home');
+                    // console.log("login success");
+                    this.fetchUserData(response.details);
                 } else {
-                    console.log("4")
+                    // console.log("4")
                     this.setState({showLoader: false});
                     Alert.alert("", response.message, [
                         { text: "Ok"}
                     ]);
-                    // console.log(response.ack)
-                    // console.log(response)
-                //this.setState({isApiError: true, apiMessage: response.message});
                 }
             }
         } catch (error) {
@@ -246,14 +239,9 @@ export default class Login extends Component {
         let response = await POST(endPoints.logIn, formData);
         this.setState({showLoader: false});
 
-        //console.log(response)
-    
+        // console.log(response);
         if (response.ack == '1') {
-            await Store('userToken', response.details.token);
-            await Store('userId', response.details.id);
-            await Store('userType', response.details.type);
-            await Store('loginStatus', 'true');
-            this.props.navigation.navigate('Home');
+            this.fetchUserData(response.details);
         } else {
             this.setState({isApiError: true, apiMessage: response.message});
         }
@@ -455,17 +443,12 @@ export default class Login extends Component {
         // console.log(response)
         // console.log(formData)
         if (response.ack == '1') {
-            await Store('userToken', response.details.token);
-            await Store('userId', response.details.id);
-            await Store('userType', response.details.type);
-            await Store('loginStatus', 'true');
-            this.props.navigation.navigate('Home');
+            // console.log("login success");
+            this.fetchUserData(response.details);
         } else {
             this.setState({isApiError: true, apiMessage: response.message});
         }
     }
-   
-      
     
     loginWithFacebook = () => {
         this.setState({showLoader: true});
@@ -520,7 +503,23 @@ export default class Login extends Component {
         }
     };
 
-    
+    fetchUserData = async (data) => {
+        let formData = new FormData();
+        formData.append('user_id', data.id);
+        
+        let response = await POST(endPoints.profileDetails, formData, {
+            Authorization: await Retrieve("userToken")
+        });
+        if (response && response.ack && response.ack == 1) {
+            store.dispatch(setUserDetails(response.details));
+
+            await Store('userToken', data.token);
+            await Store('userId', data.id);
+            await Store('userType', data.type);
+            await Store('loginStatus', 'true');
+            this.props.navigation.navigate('Home');
+        }
+    };
 
 
     render() {

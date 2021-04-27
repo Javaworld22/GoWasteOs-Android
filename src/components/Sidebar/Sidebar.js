@@ -33,6 +33,13 @@ export default class Sidebar extends Component {
                 accountName: '',
                 //iosClientId: 'XXXXXX-krv1hjXXXXXXp51pisuc1104q5XXXXXXe.apps.googleusercontent.com'
             });
+
+            this.interval2 = setInterval(
+                () => {
+                  this._fetchProfileData();
+                }
+            , 5000);
+
             this._fetchProfileData();
             this._fetchSettingsData();
         }).catch(() => {
@@ -84,16 +91,19 @@ export default class Sidebar extends Component {
         let response = await POST(endPoints.profileDetails, formData, {
             Authorization: await Retrieve("userToken")
         });
-       
+        // console.log("profileDetails noticount",response.details.unreadNotiCount);
         if (response && response.ack && response.ack == 1) {
             store.dispatch(setUserDetails(response.details));
-            //this.forceUpdate();
            this.setState({ userDetails: response.details });
         } else {
             this._logOut();
             // console.log("Error in 'profileDetails' api");
         }
     };
+
+    componentWillUnmount() {
+        clearInterval(this.interval2);
+    }
 
     componentDidUpdate(prevProps, prevState) {
         if (store.getState().userDetails !== this.state.userDetails) {
@@ -208,7 +218,10 @@ export default class Sidebar extends Component {
                                 style={styles.menulink}
                                 onPress={() => this.props.navigation.navigate('Notification')}> 
                                     <View style={styles.imgbx}>
+                                        {store.getState().userDetails.unreadNotiCount>0 ?
                                         <Image source={require('../../assets/images/micon2.png')} style={styles.micon} /> 
+                                        :<Image source={require('../../assets/images/micon2new.png')} style={styles.micon} /> 
+                                        }
                                     </View> 
                                     <Text style={[styles.linktext]}>Notifications</Text>
                                 </TouchableOpacity>

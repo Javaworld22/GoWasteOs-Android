@@ -6,10 +6,6 @@ import { createStackNavigator } from 'react-navigation-stack';
 import { createDrawerNavigator } from 'react-navigation-drawer';
 import {createBottomTabNavigator} from 'react-navigation-tabs';
 
-import {Store, Retrieve, Remove} from '../components/AsyncStorage';
-
-import CustomTabIcon from './CustomTabIcon';
-
 import Welcome from '../pages/Welcome/Welcome';
 import Splash from '../pages/Signup/Splash';
 import Login from '../pages/Signup/Login';
@@ -53,6 +49,8 @@ import BookingHistory from '../pages/Booking/BookingHistory';
 import BookingDetails from '../pages/Booking/BookingDetails';
 
 import MakePayment from '../pages/Payment/MakePayment';
+
+import {Store, Retrieve, Remove} from '../components/AsyncStorage';
 
 const AuthStack = createStackNavigator(
   {
@@ -269,55 +267,6 @@ const profileStack = createStackNavigator(
   }
 );
 
-// const bottomTab2 = createBottomTabNavigator(
-//   {
-//     Home: { screen: homeStack },
-//     Nearby: { screen: nearbyStack },
-//     Chat: { screen: chatStack },   
-//     Notification: { screen: notificationStack },
-//     Profile: { screen: profileStack },
-//   },
-//   { 
-//     defaultNavigationOptions: ({ navigation }) => ({
-//       tabBarIcon: ({ focused, horizontal, tintColor }) => {
-//         const { routeName } = navigation.state;
-//         let IconComponent = Ionicons;
-//         let iconName;
-//         if (routeName === 'Home') {
-//           iconName = `ios-home`;
-//         } else if (routeName === 'Nearby') {
-//           iconName = `md-location-outline`;
-//         }else if(routeName === 'Chat'){
-//           iconName = `md-chatbox-outline`;
-//         } else if(routeName === 'Notification'){
-//           iconName = `notifications-outline`;
-//         } else if (routeName === 'Profile') {
-//           iconName = `md-person-sharp`;
-//         }
-//           return <BottomTabIcon name={iconName} routeName={routeName} focused={focused} size={20} color={tintColor} />;
-//       },
-//     }),
-//     tabBarOptions: {
-//       activeTintColor: '#fd5b29', 
-//       inactiveTintColor: '#c9c9c9',
-//       style:{height:55, 
-//           borderTopColor:'transparent', 
-//           borderTopWidth:0, 
-//           backgroundColor:'#fff'
-//       },       
-//       labelStyle:{
-//         fontSize:12,
-//         textTransform:'uppercase',
-//         fontFamily:'Montserrat-Bold',
-//         fontWeight:'bold'
-//       },
-//       tabStyle: {
-//         paddingTop:5,   
-//         paddingBottom:5         
-//       }
-//     },
-//   }
-// );
 
 const bottomTab = createBottomTabNavigator(
   {
@@ -327,10 +276,25 @@ const bottomTab = createBottomTabNavigator(
     Notification: { screen: notificationStack },
     Profile: { screen: profileStack },
   },
-  {
-    defaultNavigationOptions: ({navigation}) => ({
-      tabBarIcon: ({focused, tintColor}) =>
-        getTabBarIcon(navigation, focused, tintColor),
+  { 
+    defaultNavigationOptions: ({ navigation }) => ({
+      tabBarIcon: ({ focused, horizontal, tintColor }) => {
+        const { routeName } = navigation.state;
+        let IconComponent = Ionicons;
+        let iconName;
+        if (routeName === 'Home') {
+          iconName = `ios-home`;
+        } else if (routeName === 'Nearby') {
+          iconName = `md-location-outline`;
+        }else if(routeName === 'Chat'){
+          iconName = `md-chatbox-outline`;
+        } else if(routeName === 'Notification'){
+          iconName = `notifications-outline`;
+        } else if (routeName === 'Profile') {
+          iconName = `md-person-sharp`;
+        }
+          return <IconComponent name={iconName} size={20} color={tintColor} />;
+      },
     }),
     tabBarOptions: {
       activeTintColor: '#fd5b29', 
@@ -351,73 +315,8 @@ const bottomTab = createBottomTabNavigator(
         paddingBottom:5         
       }
     },
-  },
+  }
 );
-
-// this function gives the icons when tab is selected
-const getTabBarIcon = (navigation, focused, tintColor) => {
-  
-  const {routeName} = navigation.state;
-  if (routeName === 'Home') {
-    if (focused) {
-      return (
-        <Ionicons name={"ios-home"} size={20} color={tintColor} />
-      );
-    } else {
-      return (
-        <Ionicons name={"ios-home"} size={20} color={tintColor} />
-      );
-    }
-  }
-
-  if (routeName === 'Nearby') {
-    if (focused) {
-      return (
-        <Ionicons name={"md-location-outline"} size={20} color={tintColor} />
-      );
-    } else {
-      return (
-        <Ionicons name={"md-location-outline"} size={20} color={tintColor} />
-      );
-    }
-  }
-
-  if (routeName === 'Chat') {
-    if (focused) {
-      return (
-        <Ionicons name={"md-chatbox-outline"} size={20} color={tintColor} />
-      );
-    } else {
-      return (
-        <CustomTabIcon name={"md-chatbox-outline"} size={20} color={tintColor} routeName={routeName} />
-      );
-    }
-  }
-
-  if (routeName === 'Notification') {
-    if (focused) {
-      return (
-        <Ionicons name={"notifications-outline"} size={20} color={tintColor} />
-      );
-    } else {
-      return (
-        <CustomTabIcon name={"notifications-outline"} size={20} color={tintColor} routeName={routeName} />
-      );
-    }
-  }
-
-  if (routeName === 'Profile') {
-    if (focused) {
-      return (
-        <Ionicons name={"md-person-sharp"} size={20} color={tintColor} />
-      );
-    } else {
-      return (
-        <Ionicons name={"md-person-sharp"} size={20} color={tintColor} />
-      );
-    }
-  }
-};
 
 const DrawerStack = createDrawerNavigator(
   {
