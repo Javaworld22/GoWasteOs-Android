@@ -23,13 +23,12 @@ export default class Header extends Component {
     }
 
     componentDidMount(){
-        
         const fun = async () => {
             PushNotification.configure({
                 // (optional) Called when Token is generated (iOS and Android)
                 onRegister: (token)=> {
-                    this.updateState(token.token)
-                    console.log(token.token)
+                    this.updateState(token.token);
+                    // console.log(token.token);
                 },
                 
                 onNotification: (notification) => {

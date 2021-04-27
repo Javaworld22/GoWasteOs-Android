@@ -3,7 +3,10 @@ import { Text, View, SafeAreaView, ScrollView, StatusBar, TouchableOpacity, Imag
 import Icon from 'react-native-vector-icons/Ionicons';
 import style from '../../components/mainstyle';
 import styles from './style'
+import {endPoints, POST, webClientId} from '../../components/Api';
 import {Store, Retrieve, Remove} from '../../components/AsyncStorage';
+import store from "../../components/redux/store/index";
+import {setUserDetails} from "../../components/redux/action/index";
 
 export default class Splash extends Component {
 
@@ -15,9 +18,23 @@ export default class Splash extends Component {
         setTimeout(() => {this.autoLogin()}, 500)
     };
 
+    fetchUserData = async () => {
+        let formData = new FormData();
+        formData.append('user_id', await Retrieve("userId"));
+        
+        let response = await POST(endPoints.profileDetails, formData, {
+            Authorization: await Retrieve("userToken")
+        });
+
+        if (response && response.ack && response.ack == 1) {
+            store.dispatch(setUserDetails(response.details));
+            this.props.navigation.navigate('Home');
+        }
+    };
+
     autoLogin=async()=>{
         if (await Retrieve('loginStatus')==='true' && await Retrieve('userToken')!==null) {
-            this.props.navigation.navigate('Home');
+            this.fetchUserData();
         } 
         else {
             if (await Retrieve('Welcome')==='shown') {

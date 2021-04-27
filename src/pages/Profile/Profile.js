@@ -7,22 +7,41 @@ import Header from '../../components/Header/Header';
 import { dynamicImageURL, POST, endPoints } from "../../components/Api";
 import { Retrieve } from "../../components/AsyncStorage";
 import store from "../../components/redux/store/index";
+import {setUserDetails} from "../../components/redux/action/index";
+import Loader from '../../components/Loader';
+import moment from "moment";
+import { NavigationEvents } from 'react-navigation';
 
 export default class Profile extends Component {
     constructor(props){
         super(props); 
         this.state = {
             profileDetails: [],
+            showLoader: false,
         };    
     }
 
     componentDidMount = () => {
+        this.getProfileData()
         this.unsubscribe = store.subscribe(() => this.forceUpdate());
     }
 
     componentWillUnmount() {
         this.unsubscribe();
-      }
+    }
+
+    getProfileData = async () => {
+        let formData = new FormData();
+        formData.append('user_id', await Retrieve("userId"));
+        this.setState({showLoader: true});
+        let response = await POST(endPoints.profileDetails, formData, {
+            Authorization: await Retrieve("userToken")
+        });
+        this.setState({showLoader: false});
+        if (response && response.ack && response.ack == 1) {
+            store.dispatch(setUserDetails(response.details));
+        }
+    };
 
     render() {
         
@@ -33,6 +52,12 @@ export default class Profile extends Component {
                     {...this.props}
                     pageType="homeDetails"
                     label="Profile"
+                />
+                <Loader 
+                    loading={this.state.showLoader} 
+                />
+                <NavigationEvents
+                    onDidFocus={() => this.getProfileData()}
                 />
 
                 <ScrollView>

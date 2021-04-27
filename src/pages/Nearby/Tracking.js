@@ -184,6 +184,10 @@ export default class Tracking extends Component {
       this.setState({showLoader: false});
       // console.log(Number(response.details.trip.destination_lat));
       if (response.details.ack == '1') {
+        console.log(response.details.booking.service_status);
+        if(response.details.booking.service_status === 'C'){
+          this.props.navigation.navigate('Profile');
+        }
         this.setState({
           tripStatus: response.details.trip.is_ongoing,
           jobLocation: {
@@ -222,7 +226,6 @@ export default class Tracking extends Component {
 
       }
     }
-
 
     findCoordinates = async() => {
         const { currentLocation } = this.state;
@@ -449,7 +452,7 @@ export default class Tracking extends Component {
             // console.log(response);
             if (response.details.ack == 1) {
               Alert.alert("", "Service completed successfully", [
-                  { text: "Ok", onPress: () => this.props.navigation.navigate('BookingDetails',{bookingId: this.state.bookingId})}
+                  { text: "Ok", onPress: () => this.props.navigation.navigate('Home')}
               ]);
             } else {
               Alert.alert("", response.details.message, [
