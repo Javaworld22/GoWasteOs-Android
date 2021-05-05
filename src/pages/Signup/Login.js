@@ -303,11 +303,7 @@ export default class Login extends Component {
             this.setState({isApiError: false, apiMessage: ""});
         }
         else if (response.ack == '1') {
-            await Store('userToken', response.details.token);
-            await Store('userId', response.details.id);
-            await Store('userType', response.details.type);
-            await Store('loginStatus', 'true');
-            this.props.navigation.navigate('Home');
+            this.fetchUserData(response.details);
         } else {
             this.setState({showLoader: false});
             Alert.alert("", response.message, [

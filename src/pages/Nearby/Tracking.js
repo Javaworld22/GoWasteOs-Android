@@ -117,6 +117,7 @@ export default class Tracking extends Component {
           if(this.state.usertype === 'C'){
 
             this.setState({
+              tripStatus:data.tripStatus,
               carLocation: {
                 latitude: data.latitude,
                 longitude: data.longitude
@@ -184,9 +185,9 @@ export default class Tracking extends Component {
       this.setState({showLoader: false});
       // console.log(Number(response.details.trip.destination_lat));
       if (response.details.ack == '1') {
-        console.log(response.details.booking.service_status);
+        // console.log(response.details.booking.service_status);
         if(response.details.booking.service_status === 'C'){
-          this.props.navigation.navigate('Profile');
+          this.props.navigation.navigate('Home');
         }
         this.setState({
           tripStatus: response.details.trip.is_ongoing,
@@ -219,7 +220,7 @@ export default class Tracking extends Component {
                 () => {
                   this.findCoordinates();
                 }
-              , 5000);
+              , 1000);
             }
           }
         );
@@ -273,7 +274,8 @@ export default class Tracking extends Component {
                         id: resuserArr[0].id,
                         bookingId: this.state.bookingId, 
                         latitude: position.coords.latitude, 
-                        longitude: position.coords.longitude, 
+                        longitude: position.coords.longitude,
+                        tripStatus: this.state.tripStatus, 
                       }
                     } else {
                       var locationInfo = {
@@ -281,6 +283,7 @@ export default class Tracking extends Component {
                         bookingId: this.state.bookingId, 
                         latitude: position.coords.latitude, 
                         longitude: position.coords.longitude, 
+                        tripStatus: this.state.tripStatus,
                       }
                     }
                     
@@ -405,10 +408,10 @@ export default class Tracking extends Component {
         longitude: this.state.carLocation.longitude,
         latitudeDelta: LATITUDE_DELTA,
         longitudeDelta: LONGITUDE_DELTA
-      })
+      },500)
 
       if (Platform.OS === "android") {
-        this.carMarkerRef.current.animateMarkerToCoordinate(newAnimatedCoords,5000);
+        this.carMarkerRef.current.animateMarkerToCoordinate(newAnimatedCoords,500);
       } else {
         this.state.currentLocation.timing(newAnimatedCoords).start();
       }
@@ -436,6 +439,7 @@ export default class Tracking extends Component {
         {
           text: "Yes",
           onPress: async () => {
+            this.setState({ tripStatus: 2 });
             let formData = new FormData();
             formData.append('booking_id', this.state.bookingId);
             formData.append('last_lat', this.state.carLocation.latitude);
@@ -451,6 +455,31 @@ export default class Tracking extends Component {
             this.setState({ showLoader: false });
             // console.log(response);
             if (response.details.ack == 1) {
+              //Send coordinate to socket
+              var resuserArr = Array();
+              if(this.state.locationUserList.length>0){
+                resuserArr = this.state.locationUserList.filter(item => item.bookingId == this.state.bookingId);
+              }
+              if(resuserArr.length>0){
+                var locationInfo = {
+                  id: resuserArr[0].id,
+                  bookingId: this.state.bookingId, 
+                  latitude: this.state.carLocation.latitude, 
+                  longitude: this.state.carLocation.longitude,
+                  tripStatus: this.state.tripStatus, 
+                }
+              } else {
+                var locationInfo = {
+                  id: '',
+                  bookingId: this.state.bookingId, 
+                  latitude: this.state.carLocation.latitude, 
+                  longitude: this.state.carLocation.longitude, 
+                  tripStatus: this.state.tripStatus,
+                }
+              }
+              
+              this.socket.emit('sendCurrentLocation', locationInfo);
+
               Alert.alert("", "Service completed successfully", [
                   { text: "Ok", onPress: () => this.props.navigation.navigate('Home')}
               ]);

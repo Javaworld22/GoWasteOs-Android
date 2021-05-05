@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Text, View, SafeAreaView, TouchableOpacity, 
+import { Text, View, SafeAreaView, TouchableOpacity, Platform,
     StatusBar, Image, ScrollView, Picker,TextInput, Alert,KeyboardAvoidingView } from 'react-native'
 
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -110,9 +110,12 @@ export default class BidPost extends Component {
                 <Loader 
                     loading={this.state.showLoader} 
                 />
-                <KeyboardAvoidingView>
+                <KeyboardAvoidingView 
+                    behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    style={style.container}
+                >
                     <ScrollView keyboardShouldPersistTaps='always'>
-                        <View style={style.container}>
+                        <View >
                             
                         {this.state.showDetails && jobDetails ?
                             <View style={style.mT2}>
