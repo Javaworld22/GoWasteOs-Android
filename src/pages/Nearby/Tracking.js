@@ -7,7 +7,7 @@ import Header from '../../components/Header/Header';
 import {dynamicImageURL,endPoints, POST,googleApiKey,SOCKETSERVER} from '../../components/Api';
 import {Store, Retrieve, Remove} from '../../components/AsyncStorage';
 import Loader from '../../components/Loader';
-import { NavigationEvents } from 'react-navigation';
+import { NavigationEvents,NavigationActions,StackActions  } from 'react-navigation';
 import store from "../../components/redux/store/index";
 import Geolocation from 'react-native-geolocation-service';
 import { PermissionsAndroid } from 'react-native';
@@ -15,11 +15,12 @@ import MapView, {Marker,AnimatedRegion,Polyline,PROVIDER_GOOGLE} from "react-nat
 import MapViewDirections from 'react-native-maps-directions';
 import moment from "moment";
 import io from 'socket.io-client';
+import haversine from "haversine";
 
 const screen = Dimensions.get('window');
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = screen.width / screen.height;
-const LATITUDE_DELTA = 0.011;
+const LATITUDE_DELTA = 0.023;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
 // const LATITUDE_DELTA = 0.003;
 // const LONGITUDE_DELTA = 0.003;
@@ -35,6 +36,9 @@ export default class Tracking extends Component {
       this.state = {
         showLoader: false,
         showMap: false,
+        focusOnCar:false,
+        firstTimeAnimateMap:true,
+        sendLocation: true,
         usertype:'',
         userSocketId:'',
         locationUserList: Array(),
@@ -58,7 +62,10 @@ export default class Tracking extends Component {
           latitudeDelta: LATITUDE_DELTA,
           longitudeDelta: LONGITUDE_DELTA
         }),
-
+        prevLatLng: {
+          latitude: 37.3318456, 
+          longitude: -122.0296002
+        },
         
       };
     }
@@ -115,26 +122,32 @@ export default class Tracking extends Component {
         if(data.bookingId == this.state.bookingId){
           //Animate map
           if(this.state.usertype === 'C'){
-
-            this.setState({
-              tripStatus:data.tripStatus,
-              carLocation: {
-                latitude: data.latitude,
-                longitude: data.longitude
+            if(data.tripStatus === 2){
+              Alert.alert("", "Service completed successfully", [
+                { text: "Ok", onPress: () => {this.goToHome()}}
+              ]);
+            } else {
+              this.setState({
+                tripStatus:data.tripStatus,
+                carLocation: {
+                  latitude: data.latitude,
+                  longitude: data.longitude
+                },
+                currentLocation: new AnimatedRegion({
+                  latitude: data.latitude,
+                  longitude: data.longitude,
+                  latitudeDelta: LATITUDE_DELTA,
+                  longitudeDelta: LONGITUDE_DELTA
+                })
+                
               },
-              currentLocation: new AnimatedRegion({
-                latitude: data.latitude,
-                longitude: data.longitude,
-                latitudeDelta: LATITUDE_DELTA,
-                longitudeDelta: LONGITUDE_DELTA
-              })
-              
-            },
-              () => {
-                //Animate map
-                this._animateToMapRegion(data.latitude, data.longitude);
-              }
-            );
+                () => {
+                  //Animate map
+                  this._animateToMapRegion(data.latitude, data.longitude);
+                }
+              );
+            }
+            
             
           }
         }
@@ -187,7 +200,9 @@ export default class Tracking extends Component {
       if (response.details.ack == '1') {
         // console.log(response.details.booking.service_status);
         if(response.details.booking.service_status === 'C'){
-          this.props.navigation.navigate('Home');
+          Alert.alert("", "Service completed successfully", [
+            { text: "Ok", onPress: () => {this.goToHome()}}
+          ]);
         }
         this.setState({
           tripStatus: response.details.trip.is_ongoing,
@@ -209,6 +224,10 @@ export default class Tracking extends Component {
             latitudeDelta: LATITUDE_DELTA,
             longitudeDelta: LONGITUDE_DELTA
           }),
+          prevLatLng: {
+            latitude: Number(response.details.trip.last_lat),
+            longitude: Number(response.details.trip.last_long)
+          },
         },
           () => {
             this.setState({showMap:true});
@@ -218,7 +237,9 @@ export default class Tracking extends Component {
               // this.findCoordinatesNew();
               this.interval = setInterval(
                 () => {
-                  this.findCoordinates();
+                  if(this.state.sendLocation === true){
+                    this.findCoordinates();
+                  }
                 }
               , 1000);
             }
@@ -287,10 +308,14 @@ export default class Tracking extends Component {
                       }
                     }
                     
-                    this.socket.emit('sendCurrentLocation', locationInfo);
+                    if(this.state.sendLocation === true){
+                      this.socket.emit('sendCurrentLocation', locationInfo);
+                      
+                      //Update coordinate
+                      this.updateTracking(position.coords.latitude, position.coords.longitude);
+                    }
                     
-                    //Update coordinate
-                    this.updateTracking(position.coords.latitude, position.coords.longitude);
+                    
                   }
                 );
               }
@@ -302,7 +327,7 @@ export default class Tracking extends Component {
               console.log(error.code, error.message);
             },
 
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000}
           );              
         }
     };
@@ -396,27 +421,53 @@ export default class Tracking extends Component {
     // });
 
     _animateToMapRegion = (lat,lng) => {
-      const newAnimatedCoords = new AnimatedRegion({
+      const newCoordinate = {
         latitude: lat,
         longitude: lng,
-        latitudeDelta: LATITUDE_DELTA,
-        longitudeDelta: LONGITUDE_DELTA
-      });
+      };
 
-      this.mapRef.current.animateToRegion({
-        latitude: this.state.carLocation.latitude,
-        longitude: this.state.carLocation.longitude,
-        latitudeDelta: LATITUDE_DELTA,
-        longitudeDelta: LONGITUDE_DELTA
-      },500)
-
-      if (Platform.OS === "android") {
-        this.carMarkerRef.current.animateMarkerToCoordinate(newAnimatedCoords,500);
-      } else {
-        this.state.currentLocation.timing(newAnimatedCoords).start();
+      //Animate map only for first time
+      if(this.state.firstTimeAnimateMap === true){
+        // console.log('first time animate');
+        this.mapRef.current.animateToRegion({
+          latitude: lat,
+          longitude: lng,
+          latitudeDelta: LATITUDE_DELTA,
+          longitudeDelta: LONGITUDE_DELTA
+        },500)
+        this.setState({firstTimeAnimateMap:false});
       }
 
-      // this._map.animateCamera({center: newCoords,pitch: 2, heading: 20,altitude: 200, zoom: 40},10);
+      //calculate distance
+      const distance =  haversine(this.state.prevLatLng, newCoordinate) || 0;
+      // console.log('time to animate map',distance);
+      if(distance>0.70){
+        this.mapRef.current.animateToRegion({
+          latitude: lat,
+          longitude: lng,
+          latitudeDelta: LATITUDE_DELTA,
+          longitudeDelta: LONGITUDE_DELTA
+        },1000)
+        this.setState({prevLatLng:newCoordinate});
+      }
+
+      if(this.state.focusOnCar === true){
+        // console.log('focus on car clicked');
+        this.mapRef.current.animateToRegion({
+          latitude: lat,
+          longitude: lng,
+          latitudeDelta: LATITUDE_DELTA,
+          longitudeDelta: LONGITUDE_DELTA
+        },500)
+        this.setState({focusOnCar:false});
+      }
+
+      //animate marker
+      if (Platform.OS === "android") {
+        this.carMarkerRef.current.animateMarkerToCoordinate(newCoordinate,500);
+      } else {
+        this.state.currentLocation.timing(newCoordinate).start();
+      }
     }
 
     updateTracking = async(latitude,longitude) => {
@@ -434,12 +485,19 @@ export default class Tracking extends Component {
     }
 
     endTrip = async() => {
+      this.setState({sendLocation:false});
       Alert.alert("", "Are you sure?", [
-        { text: "Cancel" },
+        { text: "Cancel",
+          onPress: async () => {
+            this.setState({sendLocation:true});
+          }
+
+        },
         {
           text: "Yes",
-          onPress: async () => {
-            this.setState({ tripStatus: 2 });
+          onPress: async () => { 
+            clearInterval(this.interval);
+
             let formData = new FormData();
             formData.append('booking_id', this.state.bookingId);
             formData.append('last_lat', this.state.carLocation.latitude);
@@ -466,7 +524,7 @@ export default class Tracking extends Component {
                   bookingId: this.state.bookingId, 
                   latitude: this.state.carLocation.latitude, 
                   longitude: this.state.carLocation.longitude,
-                  tripStatus: this.state.tripStatus, 
+                  tripStatus: 2, 
                 }
               } else {
                 var locationInfo = {
@@ -474,14 +532,14 @@ export default class Tracking extends Component {
                   bookingId: this.state.bookingId, 
                   latitude: this.state.carLocation.latitude, 
                   longitude: this.state.carLocation.longitude, 
-                  tripStatus: this.state.tripStatus,
+                  tripStatus: 2,
                 }
               }
               
               this.socket.emit('sendCurrentLocation', locationInfo);
 
               Alert.alert("", "Service completed successfully", [
-                  { text: "Ok", onPress: () => this.props.navigation.navigate('Home')}
+                  { text: "Ok", onPress: () => {this.goToHome()}}
               ]);
             } else {
               Alert.alert("", response.details.message, [
@@ -493,6 +551,15 @@ export default class Tracking extends Component {
         }
       ]);
       
+    }
+
+    //after end of service , reset navigation
+    goToHome = () => {
+      const resetAction = StackActions.reset({
+        index: 0,
+        actions: [NavigationActions.navigate({ routeName: 'Profile' })],
+      });
+      this.props.navigation.dispatch(resetAction);
     }
 
     render() {
@@ -517,14 +584,14 @@ export default class Tracking extends Component {
                 {this.state.showMap &&
                 <View style={style.container}>
                     <MapView
-                        style={{flex:1}}
-                        provider={PROVIDER_GOOGLE}
-                        initialRegion={{
-                          ...this.state.carLocation,
-                          latitudeDelta: LATITUDE_DELTA,
-                          longitudeDelta: LONGITUDE_DELTA,
-                        }}
-                        ref={this.mapRef}
+                      style={{flex:1}}
+                      provider={PROVIDER_GOOGLE}
+                      initialRegion={{
+                        ...this.state.carLocation,
+                        latitudeDelta: LATITUDE_DELTA,
+                        longitudeDelta: LONGITUDE_DELTA,
+                      }}
+                      ref={this.mapRef}
                     >
                         
                       {/* <Marker
@@ -559,7 +626,26 @@ export default class Tracking extends Component {
                       /> */}
 
                     </MapView>
+                    
 
+                    <View style={styles.refreshBtnContainer}>
+                      <TouchableOpacity
+                        style={[style.smbtn, {backgroundColor:'black',}]}
+                        onPress={() => this.startTrackingFunctions()}
+                      >
+                        <Text style={style.smbtntext}>Refresh</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    
+                    <View style={styles.mapFocusBtnContainer}>
+                      <TouchableOpacity
+                        style={[style.smbtn, {backgroundColor:'black',}]}
+                        onPress={() => this.setState({focusOnCar:true})}
+                      >
+                        <Text style={style.smbtntext}>Focus On Car</Text>
+                      </TouchableOpacity>
+                    </View>
                     
                     {this.state.usertype == 'SP' && this.state.tripStatus == 1 &&
                     <View style={styles.mapbtnContainer}>
@@ -572,34 +658,7 @@ export default class Tracking extends Component {
                     </View>
                     }
 
-                    {this.state.usertype == 'SP' && this.state.tripStatus == 2 &&
-                    <View style={styles.mapbtnContainer}>
-                      <View style={[style.smbtn, {backgroundColor:'#00bcd4'}]}>
-                        <Text style={style.smbtntext}>Service is completed</Text>
-                      </View>
-                      <TouchableOpacity
-                        style={[style.smbtn, {backgroundColor:'#fb6400',}]}
-                        onPress={() => this.props.navigation.navigate('BookingDetails',{bookingId: this.state.bookingId})}
-                      >
-                        <Text style={style.smbtntext}>Go Back</Text>
-                      </TouchableOpacity>
-                    </View>
-                    }
-
-                    {this.state.tripStatus == 2 && this.state.usertype == 'C' &&
-                    <View style={styles.mapbtnContainer}>
-                      <View style={[style.smbtn, {backgroundColor:'#00bcd4'}]}>
-                        <Text style={style.smbtntext}>Garbage Collected Successfully</Text>
-                      </View>
-                      <TouchableOpacity
-                        style={[style.smbtn, {backgroundColor:'#fb6400',}]}
-                        onPress={() => this.props.navigation.navigate('MakePayment',{bookingId: this.state.bookingId})}
-                      >
-                        <Text style={style.smbtntext}>Make Payment</Text>
-                      </TouchableOpacity>
-                    </View>
-                    }
-
+                    
 
                 </View>
                 }
