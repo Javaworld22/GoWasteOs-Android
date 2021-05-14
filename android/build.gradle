@@ -10,7 +10,8 @@ buildscript {
         googlePlayServicesAuthVersion = "17.0.0"
         
         googlePlayServicesVersion = "+"
-        firebaseMessagingVersion = "+"
+        // firebaseMessagingVersion = "+"
+        firebaseMessagingVersion = "21.1.0"
         firebaseVersion="+"
     }
     repositories {

@@ -26,8 +26,6 @@ export default class Message extends Component {
             showLoader: false,
             pageno: 1,
             isScroll:false,
-            showOlderMsg: 0,
-            scrollToEnd: true,
             userType:"",
 
             chatUserIdArr: Array(),
@@ -119,22 +117,40 @@ export default class Message extends Component {
     getMessageList = async(receiverid) => {
         let formData = new FormData();
         formData.append('user_id', await Retrieve("userId"));
-        formData.append('pageno', this.state.pageno); 
+        if(this.state.isScroll==true){
+            formData.append('pageno', this.state.pageno+1);
+        }else{
+            formData.append('pageno', this.state.pageno);
+        } 
         formData.append('to_id', receiverid);
-
-        this.setState({ showLoader: true });
+        if(this.state.isScroll == false){
+            this.setState({ showLoader: true });
+        }
         let response = await POST(endPoints.messages, formData, {
             Authorization: await Retrieve("userToken")
         });
         this.setState({showLoader: false});
-        // console.log(response);
+
         //For normal load
         if (response && this.state.isScroll==false && response.details.ack == '1') {
-            
-            this.setState({showOlderMsg:response.details.oldMsg});
             this.setState({messageList: response.details.messages.reverse()});
         } 
+        // //For scroll
+        if (response.details.messages && this.state.isScroll==true && response.details.ack == '1') {
+            const object1 = this.state.messageList;             
+            const object2 = response.details.messages.reverse();             
+            const object3 = [...object2, ...object1];         
+            this.setState({messageList: object3});
+            // this.setState({
+            //     messageList: response.details.messages.reverse().concat(this.state.messageList),
+            // });
+            this.setState({isScroll: false});
+            this.setState({pageno: this.state.pageno+1});
+        }
         
+        if(response.details.ack == '0'){
+            this.setState({isScroll: false});
+        }
     }
 
     getReceiverDetails= async(receiverid) => {
@@ -265,8 +281,7 @@ export default class Message extends Component {
             prevmsg.push(info);
             this.setState({
                 messageList:prevmsg,
-                message: "",
-                scrollToEnd: true,
+                message: ""
             });
             
             this.socket.emit('sendMsg', info);
@@ -278,32 +293,6 @@ export default class Message extends Component {
         }
     }
 
-    loadOlderMessage = async() => {
-        let formData = new FormData();
-        formData.append('user_id', await Retrieve("userId"));
-        formData.append('pageno', this.state.pageno+1); 
-        formData.append('to_id', this.props.navigation.state.params.to_id);
-
-        // this.setState({ showLoader: true });
-        let response = await POST(endPoints.messages, formData, {
-            Authorization: await Retrieve("userToken")
-        });
-        // this.setState({showLoader: false});
-        // console.log(response);
-        //For normal load
-        if (response && this.state.isScroll==false && response.details.ack == '1') {
-            const object1 = this.state.messageList;             
-            const object2 = response.details.messages.reverse();             
-            const object3 = [...object2, ...object1];         
-            this.setState({messageList: object3});
-            this.setState({
-                scrollToEnd: false,
-                pageno: this.state.pageno+1
-            });
-
-            this.setState({showOlderMsg:response.details.oldMsg});
-        } 
-    }
 
     render() {
         
@@ -355,6 +344,7 @@ export default class Message extends Component {
                     onDidFocus={() => 
                         this.setState({
                             pageno:1,
+                            isScroll:false,
                             messageList:Array(),
                         },
                             ()=>{
@@ -367,24 +357,10 @@ export default class Message extends Component {
                 <View style={{flex: 1}}>
                     <ScrollView
                         ref={this.msgScrollViewRef}
-                        onContentSizeChange={() => {
-                            this.state.scrollToEnd === true?this.msgScrollViewRef.current.scrollToEnd({ animated: true }):"";
-                        }}
-
+                        onContentSizeChange={() => this.msgScrollViewRef.current.scrollToEnd({ animated: true })}
+                        onScrollBeginDrag={this.msgScrollPagination}
                     >     
                         <View  style={[style.container],{paddingBottom:70,paddingLeft:10,paddingRight:10}}>
-
-                        {this.state.showOlderMsg === 1 ?    
-                            <View style={{alignItems:'center',}}>
-                                <TouchableOpacity 
-                                    style={{width:"40%",alignItems:'center',borderRadius:25,
-                                    paddingHorizontal:8,paddingVertical:8,borderColor:'black',borderWidth:1}} 
-                                    onPress={() => this.loadOlderMessage()} 
-                                >
-                                    <Text>Older Messages</Text>
-                                </TouchableOpacity>
-                            </View>
-                        :<></>}
 
                         {this.state.messageList && this.state.messageList.length > 0 ? this.state.messageList.map((msgitem, index) => {
                             var msgdate=msgitem.createdDate.split(" ")[0];
@@ -398,7 +374,7 @@ export default class Message extends Component {
                             if(msgtoday==msgdate){
                                 msgdateTime=moment.utc(msgtime, "HH:mm:ss").format('hh:mm A');
                             }else{
-                                msgdateTime=moment(msgdate).format('MMMM Do YYYY')+', '+moment(msgtime, "HH:mm:ss").format('hh:mm A');
+                                msgdateTime=msgdd+'/'+msgmm + '/' + msgyyyy+', '+moment(msgtime, "HH:mm:ss").format('hh:mm A');
                             }
                         return (
                             

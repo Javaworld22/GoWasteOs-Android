@@ -231,6 +231,34 @@ export default {
         bottom: 20,
         height:"11%"
     },
+
+    mapFocusBtnContainer: {
+        flexDirection: 'column',
+        marginVertical: 20,
+        backgroundColor: 'transparent',
+        position:'absolute',
+        justifyContent: "space-between",
+        alignItems:'center',
+        // left: 0, 
+        right: 10, 
+        bottom: 0,
+        top:20,
+        height:"11%"
+    },
+
+    refreshBtnContainer: {
+        flexDirection: 'column',
+        marginVertical: 20,
+        backgroundColor: 'transparent',
+        position:'absolute',
+        justifyContent: "space-between",
+        alignItems:'center',
+        left: 10, 
+        // right: 0, 
+        bottom: 0,
+        top:20,
+        height:"11%"
+    },
     
 
 }

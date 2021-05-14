@@ -15,8 +15,6 @@ import { NavigationEvents } from 'react-navigation';
 import Geolocation from 'react-native-geolocation-service';
 import { PermissionsAndroid } from 'react-native';
 
-
-
 export default class Home extends Component {
     constructor(props){
             super(props);  
@@ -31,17 +29,10 @@ export default class Home extends Component {
     }
     componentDidMount = async() => {
         this.setState({userType: await Retrieve('userType')});             
-        if(store.getState().userDetails && (store.getState().userDetails.lattitude =="" || store.getState().userDetails.longitude =="" || store.getState().userDetails.lattitude ==null || store.getState().userDetails.longitude ==null)){
-            this.findCoordinates();
-        }else{
-            this.myFunction(); 
-        }  
-
-          
+        this.findCoordinates();  
     };
 
     findCoordinates = async() => {
-        /*LOCATION : */
         //Grant the permission for Location
         const granted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
@@ -60,15 +51,12 @@ export default class Home extends Component {
                     // See error code charts below.
                     console.log(error.code, error.message);
                 },
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+                { enableHighAccuracy: true, timeout: 15000,maximumAge: 10000 }
             );              
-            this.watchID = Geolocation.watchPosition((lastPosition) => {
-            });
         }
-        //----LOCATION END----//
-    };
+    }
 
-    updateLatLong=async(lat,long)=>{
+    updateLatLong = async(lat,long)=>{
         let formData = new FormData();
         formData.append('user_id', await Retrieve("userId"));
         formData.append('lattitude', lat);
@@ -77,14 +65,13 @@ export default class Home extends Component {
         let response = await POST(endPoints.updateProfile, formData, {
             Authorization: await Retrieve("userToken")
         });
+        // console.log('hello');
         if (response.ack == 1) {
+            console.log("location update");
             this.myFunction();
         } else {
             console.log("Error in api");
         }
-    }
-    componentWillUnmount() {
-        Geolocation.clearWatch(this.watchID);
     }
 
     myFunction = async () => {
@@ -193,8 +180,8 @@ export default class Home extends Component {
     };
 
     fetchList=()=>{
-        this.setState({isScroll: true});
-        this.myFunction();
+        // this.myFunction();
+        // this.findCoordinates();
     }
 
     myRate=(rating)=>{
