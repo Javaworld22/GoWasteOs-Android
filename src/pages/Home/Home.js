@@ -29,7 +29,9 @@ export default class Home extends Component {
     }
     componentDidMount = async() => {
         this.setState({userType: await Retrieve('userType')});             
-        this.findCoordinates();  
+           
+        this.myFunction();
+        this.findCoordinates();   
     };
 
     findCoordinates = async() => {
@@ -51,7 +53,7 @@ export default class Home extends Component {
                     // See error code charts below.
                     console.log(error.code, error.message);
                 },
-                { enableHighAccuracy: true, timeout: 15000,maximumAge: 10000 }
+                { enableHighAccuracy: true, timeout: 15000,maximumAge: 1000 }
             );              
         }
     }
@@ -180,7 +182,7 @@ export default class Home extends Component {
     };
 
     fetchList=()=>{
-        // this.myFunction();
+        this.myFunction();
         // this.findCoordinates();
     }
 
@@ -219,7 +221,7 @@ export default class Home extends Component {
                             serviceProviderList:{}
                         },
                             ()=>{
-                                this.myFunction()
+                                this.fetchList()
                             })
                     }
                 />

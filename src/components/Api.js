@@ -1,14 +1,12 @@
 import axios from 'axios';
 
-export const baseURL = 'http://111.93.169.90/team4/GoWasteOS/api/';
-export const dynamicImageURL = 'http://111.93.169.90/team4/GoWasteOS';
+export const baseURL = 'http://54.167.156.255/GoWasteOS/api/';
+export const dynamicImageURL = 'http://54.167.156.255/GoWasteOS';
 export const webClientId = '680624373132-k3ofeg0q9de8pgiqll26i953t3okrhld.apps.googleusercontent.com';
 export const senderIdFirebase = "680624373132";
-export const payStackPublickey = "pk_test_ad57ba5ceeeff68c89e0ed8de73cb95ae0514ec0";
-export const SOCKETSERVER = "http://111.93.169.90:8044/";
-//export const googleApiKey = 'AIzaSyDQmOfO0DzoFsx7Vx5UV_mAusRPBwCIDjg';
-export const googleApiKey = 'AIzaSyCbMTT2CVS2GbGwOF-v8M4Umy_TG_qsu0M';
-//export const googleApiKey = 'AIzaSyDhsg-BMTARV8tWV-XOyoBNmT2rY4P_BJU';
+export const payStackPublickey = "pk_live_f352fcfa4020e80109d9eb39e9723eb1ffbd4484";
+export const SOCKETSERVER = "http://54.167.156.255:8044/";
+export const googleApiKey = 'AIzaSyDQmOfO0DzoFsx7Vx5UV_mAusRPBwCIDjg';
 
 export const endPoints = {
 
