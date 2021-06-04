@@ -124,16 +124,17 @@ export default class Login extends Component {
           await GoogleSignin.hasPlayServices();
           const userInfo = await GoogleSignin.signIn();
             if(userInfo){
-                // console.log('user info',userInfo);
+                 console.log('user info',userInfo);
                 let formData = new FormData();
                 formData.append('oauth_uid', userInfo.user.id);
                 formData.append('email', "");
                 formData.append('phoneNumber', "");
                 formData.append('google_email', userInfo.user.email);
+                console.log("formData", formData)
                 let response = await POST(endPoints.socialLogin, formData);
                 
                 if(response.ack == "2"){
-                    // console.log("2")
+                     console.log("2")
                     this.setState({isApiError: true, apiMessage: "Please wait..."});
                     this.setState({modalVisible: true});
                     this.setState({userInfo: userInfo});
@@ -148,10 +149,10 @@ export default class Login extends Component {
                     this.setState({isApiError: false, apiMessage: ""});
                 }
                 else if (response.ack == '1') {
-                    // console.log("login success");
+                     console.log("login success");
                     this.fetchUserData(response.details);
                 } else {
-                    // console.log("4")
+                    console.log(response,"4")
                     this.setState({showLoader: false});
                     Alert.alert("", response.message, [
                         { text: "Ok"}
@@ -239,7 +240,7 @@ export default class Login extends Component {
         let response = await POST(endPoints.logIn, formData);
         this.setState({showLoader: false});
 
-        // console.log(response);
+         console.log(response);
         if (response.ack == '1') {
             this.fetchUserData(response.details);
         } else {
@@ -284,7 +285,7 @@ export default class Login extends Component {
         formData.append('email', "");
         formData.append('phoneNumber', "");
         let response = await POST(endPoints.socialLogin, formData);
-        // console.log(response);
+         console.log(response);
         // console.log(formData);
         
         if(response.ack == '2'){
@@ -316,7 +317,7 @@ export default class Login extends Component {
     fbloginValidation=()=>{
         var phonenoRegx = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
         if(this.state.signuptype=="fb"){
-            console.log(Number.isInteger(parseInt(this.state.phone)))
+            //console.log(Number.isInteger(parseInt(this.state.phone)))
             if(this.state.email!="" && this.state.phone!="" && this.state.type!=""){
                 if (!this.state.email.trim().match(Regex.VALID_EMAIL)) {
                     this.setState({isDetailsError: true});
@@ -364,7 +365,7 @@ export default class Login extends Component {
 
         if(this.state.signuptype=="google"){
             if(this.state.phone!="" && this.state.type!=""){
-                console.log(Number.isInteger(parseInt(this.state.phone)))
+                //console.log(Number.isInteger(parseInt(this.state.phone)))
                 if(this.state.type!="" && !Number.isInteger(parseInt(this.state.phone))){
                     this.setState({isDetailsError: true});
                     this.setState({modalError: "Invalid Phone"});
@@ -394,6 +395,7 @@ export default class Login extends Component {
                         // return false;
                         this.setState({isDetailsError: false});
                         this.fblogin();
+
                     }
                 }                             
             }else{
@@ -436,8 +438,8 @@ export default class Login extends Component {
 
         let response = await POST(endPoints.socialLogin, formData);
         this.setState({showLoader: false});
-        // console.log(response)
-        // console.log(formData)
+         console.log(response)
+         console.log(formData)
         if (response.ack == '1') {
             // console.log("login success");
             this.fetchUserData(response.details);
