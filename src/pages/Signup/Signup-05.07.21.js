@@ -18,8 +18,6 @@ export default class SignUp extends Component {
         super(props);
     
         this.state = {
-        //   firstName: '',
-        //   lastName: '',
           name:'',
           email: '',
           phone:'',
@@ -27,8 +25,10 @@ export default class SignUp extends Component {
           address: '',
           password: '',
           confirmPassword: '',
-        //   isFirstNameError: false,
-        //   isLastNameError: false,
+          bankAccountNo:'',
+          bankName:'',
+          isBankAccountNoError: false,
+          isBankNameError: false,
           isNameError:false,
           isEmailError: false,
           isPhoneError: false,
@@ -38,7 +38,8 @@ export default class SignUp extends Component {
           isMatchPasswordError: false,
           isSigningUp: false,
           isEmailValidationError: false,
-          isPhoneValidationError: false,
+          isPhoneValidError: false,
+          isPhoneValidError2: false,
           isNameValidationError: false,
           isApiError: false,
           apiMessage: '',
@@ -58,8 +59,9 @@ export default class SignUp extends Component {
         this.setState({secureTexts: !this.state.secureTexts});
       }
     
-      _signUp = async () => {
+    _signUp = async () => {
         
+        var phonenoRegx = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
         this.setState({ isApiError: false })
 
         if (this.state.name.trim() === '') {
@@ -76,30 +78,6 @@ export default class SignUp extends Component {
                 this.setState({isNameValidationError: false});
             }
         }
-        
-        // if (!this.state.firstName.trim().match(Regex.VALID_NAME)) {
-        //   this.setState({isFirstNameValidationError: true});
-        //   this.refFirstName.focus();
-        //   return;
-        // } else {
-        //   this.setState({isFirstNameValidationError: false});
-        // }
-    
-        // if (this.state.lastName.trim() === '') {
-        //   this.setState({isLastNameError: true});
-        //   this.refLastName.focus();
-        //   return;
-        // } else {
-        //   this.setState({isLastNameError: false});
-        // }
-    
-        // if (!this.state.lastName.trim().match(Regex.VALID_NAME)) {
-        //   this.setState({isLastNameValidationError: true});
-        //   this.refLastName.focus();
-        //   return;
-        // } else {
-        //   this.setState({isLastNameValidationError: false});
-        // }
     
         if(this.state.email.trim() != '') {
             if (!this.state.email.trim().match(Regex.VALID_EMAIL)) {
@@ -110,25 +88,51 @@ export default class SignUp extends Component {
                 this.setState({isEmailValidationError: false});
                 this.setState({isEmailError: false});
             }
-        } 
-
-
-        if (this.state.phone.trim() === '') {
-            this.setState({isPhoneError: true});
+        }
+        
+        if (this.state.phone === '' || this.state.phone === 0 || this.state.phone === null) {
+            this.setState({ isPhoneError: true });
             this.refPhone.focus();
             return;
         } else {
-            var phonenoRegx = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
-            if(this.state.phone.match(phonenoRegx)){
-                this.setState({isPhoneError: false});
-                this.setState({isPhoneValidationError: false});
-            }else{
-                this.setState({isPhoneValidationError: true});
-                this.setState({isPhoneError: false});
+            
+            this.setState({ isPhoneError: false });
+            if(this.state.phone.indexOf('0')!==0){
+                this.setState({ isPhoneValidError2: true });
                 this.refPhone.focus();
                 return;
+            } else {
+                this.setState({ isPhoneValidError2: false });
+                var newphno = Number(this.state.phone);
+                var newphnoString = newphno.toString();
+                console.log(newphnoString);
+                if (!newphnoString.match(phonenoRegx)) {
+                    this.setState({ isPhoneValidError: true });
+                    this.refPhone.focus();
+                    return;
+                } else {
+                    this.setState({ isPhoneValidError: false });
+                }
             }
         }
+
+
+        // if (this.state.phone.trim() === '') {
+        //     this.setState({isPhoneError: true});
+        //     this.refPhone.focus();
+        //     return;
+        // } else {
+        //     var phonenoRegx = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+        //     if(this.state.phone.match(phonenoRegx)){
+        //         this.setState({isPhoneError: false});
+        //         this.setState({isPhoneValidationError: false});
+        //     }else{
+        //         this.setState({isPhoneValidationError: true});
+        //         this.setState({isPhoneError: false});
+        //         this.refPhone.focus();
+        //         return;
+        //     }
+        // }
 
 
         if (this.state.password.trim() === '') {
@@ -155,35 +159,49 @@ export default class SignUp extends Component {
             this.setState({isMatchPasswordError: false});
         }
 
-        // if (this.state.address.trim() === '') {
-        //     this.setState({isAddressError: true});
-        //     //this.refAddress.focus();
-        //     return;
-        // } else {
-        //     this.setState({isAddressError: false});
-        // }
-
         if (this.state.type === '') {
             this.setState({isTypeError: true});
             return;
         } else {
             this.setState({isTypeError: false});
         }
+
+        if(this.state.type === 'SP') {
+            
     
+            if (this.state.bankName === '') {
+                this.setState({isBankNameError: true});
+                this.refBankName.focus();
+                return;
+            } else {
+                this.setState({isBankNameError: false});
+            }
+            if (this.state.bankAccountNo === '') {
+                this.setState({isBankAccountNoError: true});
+                this.refBankAccountNo.focus();
+                return;
+            } else {
+                this.setState({isBankAccountNoError: false});
+            }
+        }
+        
+
         this.setState({
-        //   isFirstNameError: false,
-        //   isLastNameError: false,
-          isNameError: false,
-          isEmailError: false,
-          isEmailValidationError: false,
-          isNameValidationError: false,
-          isPhoneError: false,
-          isTypeError: false,
-          isAddressError: false,
-          isPasswordError: false,
-          isConfirmPasswordError: false,
-          isMatchPasswordError: false,
-          isApiError: false
+            isNameError: false,
+            isEmailError: false,
+            isEmailValidationError: false,
+            isNameValidationError: false,
+            isPhoneError: false,
+            isPhoneValidError: false,
+            isPhoneValidError2: false,
+            isTypeError: false,
+            isAddressError: false,
+            isPasswordError: false,
+            isConfirmPasswordError: false,
+            isMatchPasswordError: false,
+            isBankAccountNoError: false,
+            isBankNameError: false,
+            isApiError: false
         });
     
         let formData = new FormData();
@@ -207,15 +225,16 @@ export default class SignUp extends Component {
         formData.append('password', this.state.password);
         formData.append('conpassword', this.state.confirmPassword);
         formData.append('type', this.state.type);
+        formData.append('bankaccountno', this.state.bankAccountNo);
+        formData.append('bankname', this.state.bankName);
 
         this.setState({showLoader: true});
         let response = await POST(endPoints.signUp, formData);
+        // let response = 0;
         
-        console.log(response)
+        // console.log(response)
         if(response.details.ack == '1') {
           this.setState({
-            // firstName: "",
-            // lastName: "",
             name: "",
             email: "",
             phone: "",
@@ -225,6 +244,8 @@ export default class SignUp extends Component {
             confirmPassword: "",
             lattitude:"",
             longitude:"",
+            bankAccountNo:'',
+            bankName:'',
             
           })
 
@@ -283,7 +304,7 @@ export default class SignUp extends Component {
                                 <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
                             </View>
                             <View style={[styles.loginbody, style.pB2]}>
-                                <View style={[style.mB2, style.pT2]}>
+                                <View style={style.mB2}>
 
                                     <View style={style.roundinput}>
                                         <TextInput  
@@ -325,7 +346,7 @@ export default class SignUp extends Component {
 
                                     <View style={style.roundinput}>
                                         <TextInput  
-                                            placeholder="phone" 
+                                            placeholder="Phone No." 
                                             placeholderTextColor="#acacac" 
                                             style={style.forminput}
                                             ref={ref => (this.refPhone = ref)}
@@ -334,11 +355,17 @@ export default class SignUp extends Component {
                                         />
                                         <TouchableOpacity style={style.iconwrap}><Icon name="call" color="#1cae81" size={22} /></TouchableOpacity>
                                     </View>
-                                    {(this.state.isPhoneError || this.state.isPhoneValidationError) && (
-                                        <Text style={styles.errorMsg}>
+                                    
+                                    {(this.state.isPhoneError || this.state.isPhoneValidError) && (
+                                        <Text style={style.errorMsg}>
                                             {this.state.isPhoneError
                                             ? 'This field is required'
-                                            : 'Phone is not valid'}
+                                            : 'Phone number should be 10 numbers'}
+                                        </Text>
+                                    )}
+                                    {this.state.isPhoneValidError2 && (
+                                        <Text style={style.errorMsg}>
+                                        Phone number should be started with 0
                                         </Text>
                                     )}
 
@@ -393,25 +420,6 @@ export default class SignUp extends Component {
                                             Confirm password does not match.
                                         </Text>
                                     )}
-
-                                    {/* <View style={style.roundinput}>
-                                        <TextInput  
-                                            placeholder="Phone No." 
-                                            placeholderTextColor="#acacac" 
-                                            keyboardType='phone-pad'
-                                            style={style.forminput}
-                                            ref={ref => (this.refPhone = ref)}
-                                            onChangeText={text => this.setState({phone: text})}
-                                        />
-                                        <TouchableOpacity style={style.iconwrap}><Icon name="ios-call" color="#1cae81" size={22} /></TouchableOpacity>
-                                    </View>
-                                    {this.state.isPhoneError && (
-                                        <Text style={styles.errorMsg}>
-                                            This field is required
-                                        </Text>
-                                    )}*/}
-
-
                                 
                                 {/* <View style={style.roundinput}>
 
@@ -460,6 +468,46 @@ export default class SignUp extends Component {
                                             This field is required
                                         </Text>
                                     )}
+
+                                    {this.state.type == 'SP'?
+                                    <View>
+                                        <Text>Example: Abbey Mortgage Bank</Text>
+                                        <View style={style.roundinput}>
+                                            <TextInput  
+                                                placeholder="Bank Name" 
+                                                placeholderTextColor="#acacac" 
+                                                style={style.forminput}
+                                                ref={ref => (this.refBankName = ref)}
+                                                onChangeText={text => this.setState({bankName: text})}
+                                            />
+                                            <TouchableOpacity style={style.iconwrap}><Icon name="ios-lock-closed" color="#1cae81" size={22} /></TouchableOpacity>
+                                        </View>
+                                        
+                                        {this.state.isBankNameError && (
+                                            <Text style={styles.errorMsg}>
+                                                This field is required
+                                            </Text>
+                                        )}
+
+                                        <View style={style.roundinput}>
+                                            <TextInput  
+                                                placeholder="Bank Account No." 
+                                                placeholderTextColor="#acacac" 
+                                                keyboardType='phone-pad'
+                                                style={style.forminput}
+                                                ref={ref => (this.refBankAccountNo = ref)}
+                                                onChangeText={text => this.setState({bankAccountNo: text})}
+                                            />
+                                            <TouchableOpacity style={style.iconwrap}><Icon name="ios-lock-closed" color="#1cae81" size={22} /></TouchableOpacity>
+                                        </View>
+                                        {this.state.isBankAccountNoError && (
+                                            <Text style={styles.errorMsg}>
+                                                This field is required
+                                            </Text>
+                                        )}
+                                    </View>:<></>}
+
+                                    
 
 
                                    

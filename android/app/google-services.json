@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "680624373132-c973ifastoa6dbq2vtj6e60bplo0lsbl.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.gowasteos",
+            "certificate_hash": "ed632b0c9efa51dc2e2de676d7307697bb3f9b48"
+          }
+        },
+        {
           "client_id": "680624373132-f0utcqgro35731jk1iv5jhe4a7lb7dpb.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -37,6 +45,13 @@
             {
               "client_id": "680624373132-k3ofeg0q9de8pgiqll26i953t3okrhld.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "680624373132-87n4qrf9n94k4mjvpdu1ndkehb3d1k54.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.NATIT.GoWasteOs"
+              }
             }
           ]
         }

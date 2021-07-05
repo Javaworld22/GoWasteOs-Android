@@ -43,7 +43,7 @@ export default class Login extends Component {
           signuptype:"",
           type:"",
           bankAccountNo:'',
-          bankCode:'',
+          bankName:'',
           userInfo:{},
           modalVisible:false,
           phone:"",
@@ -117,40 +117,46 @@ export default class Login extends Component {
     }
 
     _signIn = async () => { 
+        console.log("1")
         this.setState({showLoader: true});  
         this.setState({isApiError: false, apiMessage: ""});          
         try {
           await GoogleSignin.hasPlayServices();
           const userInfo = await GoogleSignin.signIn();
             if(userInfo){
+                 console.log('user info',userInfo);
                 let formData = new FormData();
                 formData.append('oauth_uid', userInfo.user.id);
                 formData.append('email', "");
                 formData.append('phoneNumber', "");
+                formData.append('google_email', userInfo.user.email);
+                console.log("formData", formData)
                 let response = await POST(endPoints.socialLogin, formData);
-                this.setState({showLoader: false});
-                if(response.ack == '2'){
+                
+                if(response.ack == "2"){
+                     console.log("2")
+                    this.setState({isApiError: true, apiMessage: "Please wait..."});
+                    this.setState({modalVisible: true});
                     this.setState({userInfo: userInfo});
-                    this.setState({showLoader: false});
-
                     this.setState({ 
                         email:"", 
                         phone:"", 
                         type:"", 
                         bankAccountNo:'',
-                        bankCode:'',
+                        bankName:'',
                     });
-                    this.setState({modalVisible: true});
+                    this.setState({showLoader: false});
+                    this.setState({isApiError: false, apiMessage: ""});
                 }
-                if (response.ack == '1') {
-                    await Store('userToken', response.details.token);
-                    await Store('userId', response.details.id);
-                    await Store('userType', response.details.type);
-                    await Store('loginStatus', 'true');
-                    this.props.navigation.navigate('Home');
+                else if (response.ack == '1') {
+                     console.log("login success");
+                    this.fetchUserData(response.details);
                 } else {
-                    console.log(response.message)
-                //this.setState({isApiError: true, apiMessage: response.message});
+                    console.log(response,"4")
+                    this.setState({showLoader: false});
+                    Alert.alert("", response.message, [
+                        { text: "Ok"}
+                    ]);
                 }
             }
         } catch (error) {
@@ -234,14 +240,9 @@ export default class Login extends Component {
         let response = await POST(endPoints.logIn, formData);
         this.setState({showLoader: false});
 
-        //console.log(response)
-    
+         console.log(response);
         if (response.ack == '1') {
-            await Store('userToken', response.details.token);
-            await Store('userId', response.details.id);
-            await Store('userType', response.details.type);
-            await Store('loginStatus', 'true');
-            this.props.navigation.navigate('Home');
+            this.fetchUserData(response.details);
         } else {
             this.setState({isApiError: true, apiMessage: response.message});
         }
@@ -284,10 +285,12 @@ export default class Login extends Component {
         formData.append('email', "");
         formData.append('phoneNumber', "");
         let response = await POST(endPoints.socialLogin, formData);
-        // console.log(response);
+         console.log(response);
         // console.log(formData);
-        this.setState({showLoader: false});
+        
         if(response.ack == '2'){
+            this.setState({isApiError: true, apiMessage: "Please wait..."});
+            this.setState({modalVisible: true});
             this.setState({userInfo: user});
             this.setState({showLoader: false});
 
@@ -296,33 +299,45 @@ export default class Login extends Component {
                 phone:"", 
                 type:"", 
                 bankAccountNo:'',
-                bankCode:'',
+                bankName:'',
             });
-            this.setState({modalVisible: true});
+            this.setState({isApiError: false, apiMessage: ""});
         }
-        if (response.ack == '1') {
-            await Store('userToken', response.details.token);
-            await Store('userId', response.details.id);
-            await Store('userType', response.details.type);
-            await Store('loginStatus', 'true');
-            this.props.navigation.navigate('Home');
+        else if (response.ack == '1') {
+            this.fetchUserData(response.details);
         } else {
             this.setState({showLoader: false});
-            console.log(response.message)
+            Alert.alert("", response.message, [
+                { text: "Ok"}
+            ]);
         //this.setState({isApiError: true, apiMessage: response.message});
         }
     }
 
     fbloginValidation=()=>{
+        var phonenoRegx = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
         if(this.state.signuptype=="fb"){
+            //console.log(Number.isInteger(parseInt(this.state.phone)))
             if(this.state.email!="" && this.state.phone!="" && this.state.type!=""){
                 if (!this.state.email.trim().match(Regex.VALID_EMAIL)) {
                     this.setState({isDetailsError: true});
                     this.setState({modalError: "Invalid email."});
                     return;
-                } else {
+                }else if(this.state.email.trim().match(Regex.VALID_EMAIL) && !Number.isInteger(parseInt(this.state.phone))){
+                    this.setState({isDetailsError: true});
+                    this.setState({modalError: "Invalid Phone number"});
+                    return;
+                }else if(this.state.email.trim().match(Regex.VALID_EMAIL) && Number.isInteger(parseInt(this.state.phone)) && this.state.phone.indexOf('0')!==0){
+                    this.setState({isDetailsError: true});
+                    this.setState({modalError: "Phone number should start with 0."});
+                    return;
+                }else if(this.state.email.trim().match(Regex.VALID_EMAIL) && Number.isInteger(parseInt(this.state.phone)) && this.state.phone.indexOf('0')==0 && !this.state.phone.substring(1).match(phonenoRegx)){
+                    this.setState({isDetailsError: true});
+                    this.setState({modalError: "Phone Number must be 10 digit."});
+                    return;
+                }else if(this.state.email.trim().match(Regex.VALID_EMAIL) && Number.isInteger(parseInt(this.state.phone)) && this.state.phone.indexOf('0')==0 && this.state.phone.substring(1).match(phonenoRegx)) {
                     if(this.state.type=='SP'){
-                        if(this.state.bankAccountNo!="" && this.state.bankCode!=""){
+                        if(this.state.bankAccountNo!="" && this.state.bankName!=""){
                             this.setState({isDetailsError: false});
                             this.fblogin();
                         } else {
@@ -331,6 +346,10 @@ export default class Login extends Component {
                             return;
                         }
                     } else {
+                        // this.setState({isDetailsError: false});
+                        // this.setState({modalError: ""});
+                        // console.log("success")
+                        // return false;
                         this.setState({isDetailsError: false});
                         this.fblogin();
                     }
@@ -346,20 +365,39 @@ export default class Login extends Component {
 
         if(this.state.signuptype=="google"){
             if(this.state.phone!="" && this.state.type!=""){
-                if(this.state.type=='SP'){
-                    if(this.state.bankAccountNo!="" && this.state.bankCode!=""){
+                //console.log(Number.isInteger(parseInt(this.state.phone)))
+                if(this.state.type!="" && !Number.isInteger(parseInt(this.state.phone))){
+                    this.setState({isDetailsError: true});
+                    this.setState({modalError: "Invalid Phone"});
+                    return;
+                }else if(this.state.type!="" && Number.isInteger(parseInt(this.state.phone)) && this.state.phone.indexOf('0')!==0){
+                    this.setState({isDetailsError: true});
+                    this.setState({modalError: "Phone number should start with 0."});
+                    return;
+                }else if(this.state.type!="" && Number.isInteger(parseInt(this.state.phone)) && this.state.phone.indexOf('0')==0 && !this.state.phone.substring(1).match(phonenoRegx)){
+                    this.setState({isDetailsError: true});
+                    this.setState({modalError: "Phone Number must be 10 digit."});
+                    return;
+                }else if(this.state.type!="" && Number.isInteger(parseInt(this.state.phone)) && this.state.phone.indexOf('0')==0 && this.state.phone.substring(1).match(phonenoRegx)) {
+                    if(this.state.type=='SP'){
+                        if(this.state.bankAccountNo!="" && this.state.bankName!=""){
+                            this.setState({isDetailsError: false});
+                            this.fblogin();
+                        } else {
+                            this.setState({isDetailsError: true});
+                            this.setState({modalError: "Please fill these required fields."});
+                            return;
+                        }
+                    } else {
+                        // this.setState({isDetailsError: false});
+                        // this.setState({modalError: ""});
+                        // console.log("success")
+                        // return false;
                         this.setState({isDetailsError: false});
                         this.fblogin();
-                    } else {
-                        this.setState({isDetailsError: true});
-                        this.setState({modalError: "Please fill these required fields."});
-                        return;
+
                     }
-                } else {
-                    this.setState({isDetailsError: false});
-                    this.fblogin();
-                }
-                             
+                }                             
             }else{
                 this.setState({isDetailsError: true});
                 this.setState({modalError: "Please fill these required fields."});
@@ -395,25 +433,20 @@ export default class Login extends Component {
         }
 
         formData.append('bankaccountno', this.state.bankAccountNo);
-        formData.append('bankcode', this.state.bankCode);
+        formData.append('bankname', this.state.bankName);
         formData.append('type', this.state.type);
 
         let response = await POST(endPoints.socialLogin, formData);
         this.setState({showLoader: false});
-        // console.log(response)
-        // console.log(formData)
+         console.log(response)
+         console.log(formData)
         if (response.ack == '1') {
-            await Store('userToken', response.details.token);
-            await Store('userId', response.details.id);
-            await Store('userType', response.details.type);
-            await Store('loginStatus', 'true');
-            this.props.navigation.navigate('Home');
+            // console.log("login success");
+            this.fetchUserData(response.details);
         } else {
             this.setState({isApiError: true, apiMessage: response.message});
         }
     }
-   
-      
     
     loginWithFacebook = () => {
         this.setState({showLoader: true});
@@ -461,15 +494,34 @@ export default class Login extends Component {
                 phone:"", 
                 type:"", 
                 bankAccountNo:'',
-                bankCode:'',
+                bankName:'',
             });
         } catch (error) {
             console.error(error);
         }
     };
 
+    fetchUserData = async (data) => {
+        let formData = new FormData();
+        formData.append('user_id', data.id);
+        
+        let response = await POST(endPoints.profileDetails, formData, {
+            Authorization: await Retrieve("userToken")
+        });
+        if (response && response.ack && response.ack == 1) {
+            store.dispatch(setUserDetails(response.details));
+
+            await Store('userToken', data.token);
+            await Store('userId', data.id);
+            await Store('userType', data.type);
+            await Store('loginStatus', 'true');
+            this.props.navigation.navigate('Home');
+        }
+    };
+
 
     render() {
+        //console.log(this.state.modalVisible, this.state.isApiError, this.state.apiMessage)
         return (
             <SafeAreaView style={style.wrapper}>
                 <StatusBar backgroundColor="transparent" barStyle="dark-content" />
@@ -521,6 +573,18 @@ export default class Login extends Component {
 
                         {this.state.type=="SP"?
                         <View>
+                            <Text>Example: Abbey Mortgage Bank</Text>
+                            <View style={style.roundinput}>
+                                <TextInput  
+                                    placeholder="Bank Name" 
+                                    placeholderTextColor="#acacac" 
+                                    // keyboardType='phone-pad'
+                                    style={style.forminput}
+                                    // ref={ref => (this.refBankName = ref)}
+                                    onChangeText={text => this.setState({bankName: text})}
+                                />
+                                <TouchableOpacity style={style.iconwrap}><Icon name="ios-lock-closed" color="#1cae81" size={22} /></TouchableOpacity>
+                            </View>
                             <View style={style.roundinput}>
                                 <TextInput  
                                     placeholder="Bank Account No." 
@@ -532,17 +596,7 @@ export default class Login extends Component {
                                 />
                                 <TouchableOpacity style={style.iconwrap}><Icon name="ios-lock-closed" color="#1cae81" size={22} /></TouchableOpacity>
                             </View>
-                            <View style={style.roundinput}>
-                                <TextInput  
-                                    placeholder="Bank Code" 
-                                    placeholderTextColor="#acacac" 
-                                    keyboardType='phone-pad'
-                                    style={style.forminput}
-                                    // ref={ref => (this.refBankCode = ref)}
-                                    onChangeText={text => this.setState({bankCode: text})}
-                                />
-                                <TouchableOpacity style={style.iconwrap}><Icon name="ios-lock-closed" color="#1cae81" size={22} /></TouchableOpacity>
-                            </View>
+                            
                             
                         </View>
                         :<></>}

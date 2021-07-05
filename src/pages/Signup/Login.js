@@ -5,7 +5,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import style from '../../components/mainstyle';
 import styles from './style';
 import Regex from '../../components/RegexMatch';
-import {endPoints, POST, webClientId} from '../../components/Api';
+import {endPoints, POST, webClientId, GET} from '../../components/Api';
 import {Store, Retrieve, Remove} from '../../components/AsyncStorage';
 import store from "../../components/redux/store/index";
 import {setUserDetails} from "../../components/redux/action/index";
@@ -49,6 +49,7 @@ export default class Login extends Component {
           phone:"",
           isDetailsError:false,
           modalError:"",
+          bankList:{}
         };
     }
 
@@ -72,7 +73,8 @@ export default class Login extends Component {
             accountName: '',
             //iosClientId: 'XXXXXX-krv1hjXXXXXXp51pisuc1104q5XXXXXXe.apps.googleusercontent.com'
             });
-        }    
+        } 
+        this.fetBankList();    
     };
 
     componentWillMount() {
@@ -82,6 +84,15 @@ export default class Login extends Component {
     componentWillUnmount() {
         BackHandler.removeEventListener('hardwareBackPress', this.onBackPress);
     }
+
+    fetBankList = async()=>{ 
+        let response = await GET(endPoints.getPaystackBankList);
+        if (response.details.ack == 1) {
+            this.setState({bankList: response.details.banks});
+        } else {
+            console.log("Error in api");
+        }
+   }
 
     onBackPress = () => {
         Alert.alert(
@@ -124,16 +135,17 @@ export default class Login extends Component {
           await GoogleSignin.hasPlayServices();
           const userInfo = await GoogleSignin.signIn();
             if(userInfo){
-                // console.log('user info',userInfo);
+                 console.log('user info',userInfo);
                 let formData = new FormData();
                 formData.append('oauth_uid', userInfo.user.id);
                 formData.append('email', "");
                 formData.append('phoneNumber', "");
                 formData.append('google_email', userInfo.user.email);
+                console.log("formData", formData)
                 let response = await POST(endPoints.socialLogin, formData);
                 
                 if(response.ack == "2"){
-                    // console.log("2")
+                     console.log("2")
                     this.setState({isApiError: true, apiMessage: "Please wait..."});
                     this.setState({modalVisible: true});
                     this.setState({userInfo: userInfo});
@@ -148,10 +160,10 @@ export default class Login extends Component {
                     this.setState({isApiError: false, apiMessage: ""});
                 }
                 else if (response.ack == '1') {
-                    // console.log("login success");
+                     console.log("login success");
                     this.fetchUserData(response.details);
                 } else {
-                    // console.log("4")
+                    console.log(response,"4")
                     this.setState({showLoader: false});
                     Alert.alert("", response.message, [
                         { text: "Ok"}
@@ -239,7 +251,7 @@ export default class Login extends Component {
         let response = await POST(endPoints.logIn, formData);
         this.setState({showLoader: false});
 
-        // console.log(response);
+         console.log(response);
         if (response.ack == '1') {
             this.fetchUserData(response.details);
         } else {
@@ -284,7 +296,7 @@ export default class Login extends Component {
         formData.append('email', "");
         formData.append('phoneNumber', "");
         let response = await POST(endPoints.socialLogin, formData);
-        // console.log(response);
+         console.log(response);
         // console.log(formData);
         
         if(response.ack == '2'){
@@ -316,7 +328,7 @@ export default class Login extends Component {
     fbloginValidation=()=>{
         var phonenoRegx = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
         if(this.state.signuptype=="fb"){
-            console.log(Number.isInteger(parseInt(this.state.phone)))
+            //console.log(Number.isInteger(parseInt(this.state.phone)))
             if(this.state.email!="" && this.state.phone!="" && this.state.type!=""){
                 if (!this.state.email.trim().match(Regex.VALID_EMAIL)) {
                     this.setState({isDetailsError: true});
@@ -364,7 +376,7 @@ export default class Login extends Component {
 
         if(this.state.signuptype=="google"){
             if(this.state.phone!="" && this.state.type!=""){
-                console.log(Number.isInteger(parseInt(this.state.phone)))
+                //console.log(Number.isInteger(parseInt(this.state.phone)))
                 if(this.state.type!="" && !Number.isInteger(parseInt(this.state.phone))){
                     this.setState({isDetailsError: true});
                     this.setState({modalError: "Invalid Phone"});
@@ -388,12 +400,11 @@ export default class Login extends Component {
                             return;
                         }
                     } else {
-                        // this.setState({isDetailsError: false});
-                        // this.setState({modalError: ""});
                         // console.log("success")
                         // return false;
                         this.setState({isDetailsError: false});
                         this.fblogin();
+
                     }
                 }                             
             }else{
@@ -431,15 +442,14 @@ export default class Login extends Component {
         }
 
         formData.append('bankaccountno', this.state.bankAccountNo);
-        formData.append('bankname', this.state.bankName);
+        formData.append('bankCode', this.state.bankName);
         formData.append('type', this.state.type);
 
         let response = await POST(endPoints.socialLogin, formData);
         this.setState({showLoader: false});
-        // console.log(response)
-        // console.log(formData)
+         console.log(response)
+         console.log(formData)
         if (response.ack == '1') {
-            // console.log("login success");
             this.fetchUserData(response.details);
         } else {
             this.setState({isApiError: true, apiMessage: response.message});
@@ -519,7 +529,6 @@ export default class Login extends Component {
 
 
     render() {
-        //console.log(this.state.modalVisible, this.state.isApiError, this.state.apiMessage)
         return (
             <SafeAreaView style={style.wrapper}>
                 <StatusBar backgroundColor="transparent" barStyle="dark-content" />
@@ -571,17 +580,22 @@ export default class Login extends Component {
 
                         {this.state.type=="SP"?
                         <View>
-                            <Text>Example: Abbey Mortgage Bank</Text>
+
+
                             <View style={style.roundinput}>
-                                <TextInput  
-                                    placeholder="Bank Name" 
-                                    placeholderTextColor="#acacac" 
-                                    // keyboardType='phone-pad'
-                                    style={style.forminput}
-                                    // ref={ref => (this.refBankName = ref)}
-                                    onChangeText={text => this.setState({bankName: text})}
-                                />
-                                <TouchableOpacity style={style.iconwrap}><Icon name="ios-lock-closed" color="#1cae81" size={22} /></TouchableOpacity>
+                                <Picker
+                                    style={[style.forminput],{width:'100%', height:40}}
+                                    selectedValue={this.state.bankName}
+                                    ref={ref => (this.refBankName = ref)}
+                                    onValueChange={(itemValue, itemIndex) => this.setState({ bankName: itemValue })}
+                                    >
+                                    <Picker.Item label="Select Bank Name" value="" />
+                                    {this.state.bankList && this.state.bankList.length > 0 ? this.state.bankList.map((item, index) => {                           
+                                    return (
+                                        <Picker.Item label={item.name} value={item.code} />
+                                        );
+                                        }):<Picker.Item label="No Bank Found" value="" />}
+                                </Picker>
                             </View>
                             <View style={style.roundinput}>
                                 <TextInput  

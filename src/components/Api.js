@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 export const baseURL = 'http://54.167.156.255/GoWasteOS/api/';
+//export const baseURL = 'http://111.93.169.90/team4/GoWasteOS/api/';
 export const dynamicImageURL = 'http://54.167.156.255/GoWasteOS';
 export const webClientId = '680624373132-k3ofeg0q9de8pgiqll26i953t3okrhld.apps.googleusercontent.com';
 export const senderIdFirebase = "680624373132";
@@ -13,6 +14,7 @@ export const endPoints = {
   logIn: 'users/token.json',
   socialLogin: 'users/socialLogin.json',
   signUp: 'users/register.json',
+  getPaystackBankList: 'users/getPaystackBankList.json',
   profileDetails: 'jobs/userprofiledetails.json',
   changePassword: 'users/changepassword.json',
   updateProfile: 'users/updateuserprofile.json',

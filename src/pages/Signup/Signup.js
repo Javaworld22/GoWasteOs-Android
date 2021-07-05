@@ -7,7 +7,7 @@ import { Picker } from '@react-native-community/picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import style from '../../components/mainstyle';
 import styles from './style';
-import {endPoints, POST, googleApiKey} from '../../components/Api';
+import {endPoints, POST, googleApiKey, GET} from '../../components/Api';
 import {Store, Retrieve, Remove} from '../../components/AsyncStorage';
 import Regex from '../../components/RegexMatch';
 import Loader from '../../components/Loader';
@@ -48,9 +48,23 @@ export default class SignUp extends Component {
           secureTexts: true,
           lattitude:"",
           longitude:"",
-          details:{}
+          details:{},
+          bankList:{}
         };
       }
+
+      componentDidMount = async() => {            
+        this.fetBankList(); 
+      };
+
+      fetBankList = async()=>{ 
+            let response = await GET(endPoints.getPaystackBankList);
+            if (response.details.ack == 1) {
+                this.setState({bankList: response.details.banks});
+            } else {
+                console.log("Error in api");
+            }
+       }
 
       changeSecurity=()=>{
         this.setState({secureText: !this.state.secureText});
@@ -226,7 +240,7 @@ export default class SignUp extends Component {
         formData.append('conpassword', this.state.confirmPassword);
         formData.append('type', this.state.type);
         formData.append('bankaccountno', this.state.bankAccountNo);
-        formData.append('bankname', this.state.bankName);
+        formData.append('bankCode', this.state.bankName);
 
         this.setState({showLoader: true});
         let response = await POST(endPoints.signUp, formData);
@@ -470,18 +484,25 @@ export default class SignUp extends Component {
                                     )}
 
                                     {this.state.type == 'SP'?
-                                    <View>
-                                        <Text>Example: Abbey Mortgage Bank</Text>
-                                        <View style={style.roundinput}>
-                                            <TextInput  
-                                                placeholder="Bank Name" 
-                                                placeholderTextColor="#acacac" 
-                                                style={style.forminput}
-                                                ref={ref => (this.refBankName = ref)}
-                                                onChangeText={text => this.setState({bankName: text})}
-                                            />
-                                            <TouchableOpacity style={style.iconwrap}><Icon name="ios-lock-closed" color="#1cae81" size={22} /></TouchableOpacity>
-                                        </View>
+                                    
+                                    <View>    
+
+                                    <View style={style.roundinput}>
+                                        <Picker
+                                            style={[style.forminput],{width:'100%', height:40}}
+                                            selectedValue={this.state.bankName}
+                                            ref={ref => (this.refBankName = ref)}
+                                            onValueChange={(itemValue, itemIndex) => this.setState({ bankName: itemValue })}
+                                        >
+                                            <Picker.Item label="Select Bank Name" value="" />
+                                            {this.state.bankList && this.state.bankList.length > 0 ? this.state.bankList.map((item, index) => {                           
+                                            return (
+                                                <Picker.Item label={item.name} value={item.code} />
+                                                );
+                                                }):<Picker.Item label="No Bank Found" value="" />}
+                                        </Picker>
+                                        
+                                    </View>
                                         
                                         {this.state.isBankNameError && (
                                             <Text style={styles.errorMsg}>
