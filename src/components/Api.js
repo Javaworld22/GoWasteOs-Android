@@ -14,6 +14,7 @@ export const endPoints = {
   logIn: 'users/token.json',
   socialLogin: 'users/socialLogin.json',
   signUp: 'users/register.json',
+  getPaystackBankList: 'users/getPaystackBankList.json',
   profileDetails: 'jobs/userprofiledetails.json',
   changePassword: 'users/changepassword.json',
   updateProfile: 'users/updateuserprofile.json',
