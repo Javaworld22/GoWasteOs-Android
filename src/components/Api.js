@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-export const baseURL = 'http://54.167.156.255/GoWasteOS/api/';
-//export const baseURL = 'http://111.93.169.90/team4/GoWasteOS/api/';
-export const dynamicImageURL = 'http://54.167.156.255/GoWasteOS';
+export const baseURL = 'https://www.gowasteos.com/api/';
+export const dynamicImageURL = 'https://www.gowasteos.com';
 export const webClientId = '680624373132-k3ofeg0q9de8pgiqll26i953t3okrhld.apps.googleusercontent.com';
 export const senderIdFirebase = "680624373132";
 export const payStackPublickey = "pk_live_f352fcfa4020e80109d9eb39e9723eb1ffbd4484";
